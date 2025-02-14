@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Valentine's Surprise Week for My Love Bhuvana</title>
+    <title>Valentine's Surprise</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -22,17 +22,28 @@
       h1 {
         color: #e91e63;
       }
-      .hidden {
-        display: none;
+      .stepper {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
       }
-      button {
+      .step {
+        width: 60px;
+        height: 60px;
+        background: #f8bbd0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 5px;
+        clip-path: polygon(50% 0%, 90% 30%, 100% 70%, 50% 100%, 0 70%, 10% 30%);
+      }
+      .step.active {
         background: #e91e63;
         color: white;
-        padding: 10px 15px;
-        border: none;
-        cursor: pointer;
-        margin-top: 10px;
-        border-radius: 5px;
       }
       .popup {
         position: fixed;
@@ -45,200 +56,63 @@
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         display: none;
       }
-      @keyframes heartEffect {
-        0% {
-          opacity: 1;
-          transform: scale(1);
-        }
-        50% {
-          opacity: 0.6;
-          transform: scale(1.2);
-        }
-        100% {
-          opacity: 0;
-          transform: scale(1);
-        }
-      }
-
-      .heart {
-        position: fixed;
-        width: 100px;
-        height: 100px;
-        background: green;
-        clip-path: polygon(50% 0%, 0% 50%, 50% 100%, 100% 50%);
-        display: none;
-        animation: heartEffect 2s ease-out;
-        pointer-events: none;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      }
-      .stepper {
-        display: flex;
-        justify-content: space-around;
-        margin-top: 20px;
-      }
-      .step {
-        padding: 10px;
-        border-radius: 50%;
-        background: #f8bbd0;
-        cursor: pointer;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .step.active {
-        background: #e91e63;
-        color: white;
-      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1 id="day-title">❤️ Hey pondati, It's Valentine's week!</h1>
-      <h1 id="day-title" style="font-size: x-large">
-        Surprises ahead each day!!
-      </h1>
-      <h1 id="day-title" style="font-size: large">
-        Thank you for being my &quot;Everything&quot; Bhuvana!!! I'm grateful to you. Here's a small attempt from my side to surprise you on this beautiful occasion!!!
-      </h1>
+      <h1 id="day-title">❤️ Happy Valentine's Week ❤️</h1>
       <div class="stepper" id="stepper"></div>
-      <p id="message"></p>
-      <button id="reveal-btn" class="hidden">Reveal Gift Location</button>
-      <div id="feedback-section" class="hidden">
-        <p>Did you like yesterday's gift?</p>
-        <button onclick="respondFeedback(true)">I Loved It! ❤️</button>
-        <button onclick="respondFeedback(false)">Not Really 😔</button>
-      </div>
     </div>
 
     <div class="popup" id="popup">
       <p id="popup-message"></p>
       <button onclick="closePopup()">Close</button>
     </div>
-    <div class="heart" id="heart"></div>
 
     <script>
-      const days = [
-        {
-          day: "Feb 7",
-          title: "🌹 Rose Day",
-          message:
-            "You are the rose that adds fragrance to my life. Happy Rose Day, my love.",
-        },
-        {
-          day: "Feb 8",
-          title: "🍫 Chocolate Day",
-          message:
-            "Life has become more sweeter with chocolates and you! Thank you for being in it!!",
-        },
-        {
-          day: "Feb 9",
-          title: "🧸 Teddy Day",
-          message: "Cuddle up! A gift is waiting for you!",
-        },
-        {
-          day: "Feb 10",
-          title: "💌 Promise Day",
-          message:
-            "A little promise, a big love - today’s surprise promise will make you smile!",
-        },
-        {
-          day: "Feb 11",
-          title: "💓 Hug Day",
-          message: "A warm hug is waiting for you somewhere special!",
-        },
-        {
-          day: "Feb 12",
-          title: "💋 Kiss Day",
-          message: "Sealed with a kiss - find today’s lovely surprise!",
-        },
-        {
-          day: "Feb 13",
-          title: "🎁 Gift Day",
-          message: "A perfect surprise for a perfect love!",
-        },
-        {
-          day: "Feb 14",
-          title: "💖 Valentine’s Day",
-          message: "All these days, all these gifts, just to say I LOVE YOU!",
-        },
-      ];
-
-      const giftLocations = [
-        "In our bedroom wardrobe!",
-        "In the fridge!",
-        "Near the hall TV unit!",
-        "On the bookshelf!",
-        "In the hall!",
-        "In my Laptop bag!",
-        "In our crockery!",
-        "With a special note on the bed!",
-      ];
-
-      function getCurrentDay() {
-        const today = new Date();
-        return today.getDate() - 7;
-      }
+      const days = [7, 8, 9, 10, 11, 12, 13, 14];
 
       function loadContent() {
-        let index = getCurrentDay();
         const stepper = document.getElementById("stepper");
-        days.forEach((day, i) => {
+        days.forEach((day) => {
           const step = document.createElement("div");
-          step.classList.add("step");
-          if (i <= index) step.classList.add("active");
-          step.textContent = i + 7;
-          step.onclick = () => {
-            if (i > index) {
-              alert(
-                "No Peeking! Hey you naughty! Wait for 12'o clock of the day to unlock the gift!"
-              );
-            }
-          };
+          step.classList.add("step", "active");
+          step.textContent = day;
+          step.onclick = () => handleDayClick(day);
           stepper.appendChild(step);
         });
+      }
 
-        if (index >= 0 && index < days.length) {
-          document.getElementById("day-title").textContent = days[index].title;
-          document.getElementById("message").textContent = days[index].message;
-          document.getElementById("reveal-btn").classList.remove("hidden");
-          document
-            .getElementById("feedback-section")
-            .classList.remove("hidden");
+      function handleDayClick(day) {
+        if (day >= 7 && day <= 11) {
+          alert("Eruma madu, you've already got gifts for these dates! Try 12, 13, 14");
+        } else if (day === 12) {
+          showPopup("Feb 12's letter is within Woofer cupboard. Key for Feb 13: 120291");
+        } else if (day === 13) {
+          let key = prompt("Enter the key for Feb 13:");
+          if (key === "120291") {
+            showPopup("Feb 13's letter is in Hall Wash basin drawer. Key for Feb 14: 221196");
+          } else {
+            alert("Eruma madu, paathu kooda correct ah type panna matiya???");
+          }
+        } else if (day === 14) {
+          let key = prompt("Enter the key for Feb 14:");
+          if (key === "221196") {
+            showPopup("V'day's letter is in Crockery. Thank you for being my Valentine and staying alongside me. See you next year with better surprises next time, Hope you enjoyed!!!");
+          } else {
+            alert("Eruma madu, paathu kooda correct ah type panna matiya???");
+          }
         }
       }
 
-      function revealGift() {
-        let index = getCurrentDay();
-        document.getElementById(
-          "popup-message"
-        ).textContent = `Your gift is placed: ${giftLocations[index]}`;
+      function showPopup(message) {
+        document.getElementById("popup-message").textContent = message;
         document.getElementById("popup").style.display = "block";
-        document.getElementById("heart").style.display = "block";
-        setTimeout(
-          () => (document.getElementById("heart").style.display = "none"),
-          2000
-        );
       }
 
       function closePopup() {
         document.getElementById("popup").style.display = "none";
       }
-
-      function respondFeedback(liked) {
-        alert(
-          liked
-            ? "Yay! I'm so happy you loved it! ❤️"
-            : "Aww! Tomorrow’s surprise will be even better! 💕"
-        );
-      }
-
-      document
-        .getElementById("reveal-btn")
-        .addEventListener("click", revealGift);
 
       loadContent();
     </script>
