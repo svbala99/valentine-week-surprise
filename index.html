@@ -1,120 +1,2041 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Valentine's Surprise</title>
+    <title>Valentine Week - A 7-Day Surprise Experience 💕</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React, ReactDOM and Framer Motion -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10/dist/framer-motion.js"></script>
+
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+      * {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
       body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        background-color: #ffebee;
-        padding: 20px;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a0a0a 50%,
+          #0f0a0a 100%
+        );
       }
-      .container {
-        max-width: 400px;
-        margin: auto;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+      .card-shadow {
+        box-shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -1px rgba(0, 0, 0, 0.03);
       }
-      h1 {
-        color: #e91e63;
+
+      .card-shadow-hover {
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.08),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
       }
-      .stepper {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 20px;
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
       }
-      .step {
-        width: 60px;
-        height: 60px;
-        background: #f8bbd0;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 5px;
-        clip-path: polygon(50% 0%, 90% 30%, 100% 70%, 50% 100%, 0 70%, 10% 30%);
+
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
       }
-      .step.active {
-        background: #e91e63;
-        color: white;
-      }
-      .popup {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        display: none;
+
+      .gradient-text {
+        background: linear-gradient(135deg, #ff1b6b 0%, #ff0000 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1 id="day-title">❤️ Happy Valentine's Week ❤️</h1>
-      <div class="stepper" id="stepper"></div>
-    </div>
+    <div id="root"></div>
 
-    <div class="popup" id="popup">
-      <p id="popup-message"></p>
-      <button onclick="closePopup()">Close</button>
-    </div>
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+      const { motion, AnimatePresence } = window.Motion;
 
-    <script>
-      const days = [7, 8, 9, 10, 11, 12, 13, 14];
+      // Icon Components
+      const RoseIcon = () => <div className="text-5xl">🌹</div>;
 
-      function loadContent() {
-        const stepper = document.getElementById("stepper");
-        days.forEach((day) => {
-          const step = document.createElement("div");
-          step.classList.add("step", "active");
-          step.textContent = day;
-          step.onclick = () => handleDayClick(day);
-          stepper.appendChild(step);
-        });
-      }
+      const RingIcon = () => <div className="text-5xl">💍</div>;
 
-      function handleDayClick(day) {
-        if (day >= 7 && day <= 11) {
-          alert("Eruma madu, you've already got gifts for these dates! Try 12, 13, 14");
-        } else if (day === 12) {
-          showPopup("Feb 12's letter is within Woofer cupboard. Key for Feb 13: 120291");
-        } else if (day === 13) {
-          let key = prompt("Enter the key for Feb 13:");
-          if (key === "120291") {
-            showPopup("Feb 13's letter is in Hall Wash basin drawer. Key for Feb 14: 221196");
-          } else {
-            alert("Eruma madu, paathu kooda correct ah type panna matiya???");
-          }
-        } else if (day === 14) {
-          let key = prompt("Enter the key for Feb 14:");
-          if (key === "221196") {
-            showPopup("V'day's letter is in Crockery. Thank you for being my Valentine and staying alongside me. See you next year with better surprises next time, Hope you enjoyed!!!");
-          } else {
-            alert("Eruma madu, paathu kooda correct ah type panna matiya???");
-          }
+      const ChocolateIcon = () => <div className="text-5xl">🍫</div>;
+
+      const TeddyIcon = () => <div className="text-5xl">🧸</div>;
+
+      const HandshakeIcon = () => <div className="text-5xl">🤝</div>;
+
+      const KissIcon = () => <div className="text-5xl">💋</div>;
+
+      const HugIcon = () => <div className="text-5xl">🤗</div>;
+
+      const HeartIcon = () => <div className="text-5xl">💕</div>;
+
+      const ArrowRight = ({ className }) => (
+        <svg
+          className={className}
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+        >
+          <path
+            d="M6 12L10 8L6 4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+
+      // Main App Component
+      const App = () => {
+        const [currentPath, setCurrentPath] = useState(
+          window.location.hash.slice(1) || "/",
+        );
+
+        useEffect(() => {
+          const handleHashChange = () => {
+            setCurrentPath(window.location.hash.slice(1) || "/");
+            window.scrollTo(0, 0);
+          };
+          window.addEventListener("hashchange", handleHashChange);
+          return () =>
+            window.removeEventListener("hashchange", handleHashChange);
+        }, []);
+
+        const navigate = (path) => {
+          window.location.hash = path;
+        };
+
+        if (currentPath.startsWith("/day/")) {
+          return <DayPage currentPath={currentPath} navigate={navigate} />;
         }
-      }
 
-      function showPopup(message) {
-        document.getElementById("popup-message").textContent = message;
-        document.getElementById("popup").style.display = "block";
-      }
+        return <HomePage navigate={navigate} />;
+      };
 
-      function closePopup() {
-        document.getElementById("popup").style.display = "none";
-      }
+      // Home Page Component
+      const HomePage = ({ navigate }) => {
+        const days = [
+          {
+            day: 1,
+            name: "Rose Day",
+            icon: RoseIcon,
+            description: "Soft reds, pink petals, rose gradients",
+            date: "Feb 7",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-red-600 to-red-800",
+            emoji: "🌹",
+          },
+          {
+            day: 2,
+            name: "Propose Day",
+            icon: RingIcon,
+            description: "Warm pinks, handwritten fonts, hearts",
+            date: "Feb 8",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-pink-600 to-rose-700",
+            emoji: "💍",
+          },
+          {
+            day: 3,
+            name: "Chocolate Day",
+            icon: ChocolateIcon,
+            description: "Chocolate browns, creamy UI, playful",
+            date: "Feb 9",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-amber-700 to-orange-800",
+            emoji: "🍫",
+          },
+          {
+            day: 4,
+            name: "Teddy Day",
+            icon: TeddyIcon,
+            description: "Pastel colors, cute illustrations",
+            date: "Feb 10",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-yellow-600 to-amber-700",
+            emoji: "🧸",
+          },
+          {
+            day: 5,
+            name: "Promise Day",
+            icon: HandshakeIcon,
+            description: "Soft blues, handwritten notes, calm",
+            date: "Feb 11",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-blue-600 to-cyan-700",
+            emoji: "🤝",
+          },
+          {
+            day: 6,
+            name: "Kiss Day",
+            icon: KissIcon,
+            description: "Soft romantic reds, blush pinks, dreamy atmosphere",
+            date: "Feb 12",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-red-600 to-pink-700",
+            emoji: "💋",
+          },
+          {
+            day: 7,
+            name: "Hug Day",
+            icon: HugIcon,
+            description: "Cozy, warm tones",
+            date: "Feb 13",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-orange-600 to-amber-700",
+            emoji: "🤗",
+          },
+          {
+            day: 8,
+            name: "Valentine's Day",
+            icon: HeartIcon,
+            description: "Grand, magical, premium feel",
+            date: "Feb 14",
+            color: "from-gray-900 to-black",
+            borderColor: "border-red-900/30",
+            buttonColor: "from-red-700 to-rose-800",
+            emoji: "💕",
+          },
+        ];
 
-      loadContent();
+        return (
+          <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-black">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="max-w-6xl mx-auto"
+            >
+              {/* Header */}
+              <div className="text-center mb-8">
+                <motion.h1
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-5xl sm:text-6xl lg:text-7xl font-bold gradient-text mb-4"
+                >
+                  Valentine Week
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="text-lg sm:text-xl text-gray-300 mb-6"
+                >
+                  A 7-Day Surprise Experience 💕
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                  className="inline-flex items-center gap-2 text-red-400 bg-red-950/30 border border-red-900/50 px-4 py-2 rounded-full text-sm font-medium"
+                >
+                  <span>😍</span>
+                  <span>
+                    Thank you for experiencing Valentine Week with us!
+                  </span>
+                </motion.div>
+              </div>
+
+              {/* Days Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+                {days.map((day, index) => {
+                  const Icon = day.icon;
+                  return (
+                    <motion.div
+                      key={day.day}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: 0.1 * index,
+                        ease: "easeOut",
+                      }}
+                      whileHover={{
+                        y: -8,
+                        transition: { duration: 0.3, ease: "easeOut" },
+                      }}
+                    >
+                      <motion.div
+                        className={`bg-gradient-to-br ${day.color} rounded-2xl overflow-hidden border ${day.borderColor} card-shadow cursor-pointer h-full`}
+                        whileHover={{
+                          boxShadow:
+                            "0 20px 25px -5px rgba(255, 0, 0, 0.3), 0 10px 10px -5px rgba(255, 0, 0, 0.2)",
+                        }}
+                        onClick={() => navigate(`/day/${day.day}`)}
+                      >
+                        <div className="p-6">
+                          {/* Icon */}
+                          <motion.div
+                            className="mb-4 float-animation"
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Icon />
+                          </motion.div>
+
+                          {/* Content */}
+                          <h3 className="text-xl font-bold text-white mb-2">
+                            Day {day.day}: {day.name}
+                          </h3>
+                          <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                            {day.description}
+                          </p>
+
+                          {/* Footer */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 font-medium">
+                              {day.date}
+                            </span>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`inline-flex items-center gap-1 bg-gradient-to-r ${day.buttonColor} text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg transition-shadow`}
+                            >
+                              <span>Tap to play</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </motion.button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Footer */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1 }}
+                className="text-center mt-16 text-gray-400 text-sm"
+              >
+                <p>Made with 💕 for someone special</p>
+              </motion.div>
+            </motion.div>
+          </div>
+        );
+      };
+
+      // Day Page Component
+      const DayPage = ({ navigate, currentPath }) => {
+        const dayNumber = parseInt(currentPath.split("/").pop());
+        const [revealed, setRevealed] = useState(false);
+        const [showContent, setShowContent] = useState(false);
+        const [gameStarted, setGameStarted] = useState(false);
+        const [rosesCollected, setRosesCollected] = useState(0);
+        const [fallingRoses, setFallingRoses] = useState([]);
+        const [tappableRoses, setTappableRoses] = useState(new Set());
+        const [currentTappableRose, setCurrentTappableRose] = useState(null);
+
+        // Proposal game states
+        const [proposalScene, setProposalScene] = useState(0);
+        const [proposalComplete, setProposalComplete] = useState(false);
+        const [selectedChoices, setSelectedChoices] = useState([]);
+        const [currentSong, setCurrentSong] = useState(0);
+
+        // Chocolate game states
+        const [chocolatesCollected, setChocolatesCollected] = useState(0);
+        const [timeLeft, setTimeLeft] = useState(30);
+        const [chocolateItems, setChocolateItems] = useState([]);
+        const [gameActive, setGameActive] = useState(false);
+
+        // Teddy game states
+        const [teddiesCaught, setTeddiesCaught] = useState(0);
+        const [teddiesMissed, setTeddiesMissed] = useState(0);
+        const [fallingTeddies, setFallingTeddies] = useState([]);
+        const [bucketPosition, setBucketPosition] = useState(50); // percentage from left
+        const [teddyGameActive, setTeddyGameActive] = useState(false);
+
+        // Promise matching game states
+        const [cards, setCards] = useState([]);
+        const [flippedCards, setFlippedCards] = useState([]);
+        const [matchedCards, setMatchedCards] = useState([]);
+        const [moves, setMoves] = useState(0);
+        const [promiseGameActive, setPromiseGameActive] = useState(false);
+
+        const dayContent = {
+          1: {
+            name: "Rose Day",
+            icon: RoseIcon,
+            color: "from-red-400 to-pink-500",
+            message: "A rose for you, as beautiful and unique as you are.",
+            quote:
+              '"A rose speaks of love silently, in a language known only to the heart."',
+            poem: "Like a rose in morning dew,\nMy love blooms fresh and true.\nPetals soft with colors bright,\nYou fill my world with pure delight.",
+            emoji: "🌹",
+            bgColor: "from-rose-50 via-pink-50 to-red-50",
+            date: "Feb 7",
+            hasGame: true,
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
+          },
+          2: {
+            name: "Propose Day",
+            icon: RingIcon,
+            color: "from-pink-400 to-rose-500",
+            message: "Will you be mine? Today and always?",
+            quote: '"In your smile, I found my forever."',
+            poem: "With trembling heart and hopeful eyes,\nI ask you now, beneath these skies.\nWill you take my hand in yours,\nAnd walk with me through all life's doors?",
+            emoji: "💍",
+            bgColor: "from-pink-50 via-rose-50 to-pink-50",
+            date: "Feb 8",
+            hasGame: true,
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
+            gameType: "proposal",
+          },
+          3: {
+            name: "Chocolate Day",
+            icon: ChocolateIcon,
+            color: "from-amber-600 to-orange-500",
+            message: "Sweet as chocolate, warm as your love.",
+            quote:
+              '"Life is like a box of chocolates, but you are my favorite flavor."',
+            poem: "Sweet as chocolate, dark or light,\nYour love makes everything right.\nMelting moments, pure and true,\nEvery day feels new with you.",
+            emoji: "🍫",
+            bgColor: "from-amber-50 via-orange-50 to-amber-50",
+            date: "Feb 9",
+            hasGame: true,
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
+            gameType: "chocolate",
+          },
+          4: {
+            name: "Teddy Day",
+            icon: TeddyIcon,
+            color: "from-yellow-400 to-amber-500",
+            message: "A cuddly friend to remind you of my warm hugs.",
+            quote: '"Every hug from you feels like home."',
+            poem: "Soft and warm, this teddy bear,\nA symbol of the love we share.\nHold it close when I'm away,\nAnd feel my hug throughout the day.",
+            emoji: "🧸",
+            bgColor: "from-yellow-50 via-amber-50 to-yellow-50",
+            date: "Feb 10",
+            hasGame: true,
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
+            gameType: "teddy",
+          },
+          5: {
+            name: "Promise Day",
+            icon: HandshakeIcon,
+            color: "from-blue-400 to-cyan-500",
+            message: "I promise to love you, today, tomorrow, and forever.",
+            quote:
+              '"A promise made is a debt unpaid, and I vow to cherish you always."',
+            poem: "I promise to stand by your side,\nThrough every tear and every smile.\nTo hold your hand through thick and thin,\nA love that will never wear thin.",
+            emoji: "🤝",
+            bgColor: "from-blue-50 via-cyan-50 to-blue-50",
+            date: "Feb 11",
+            hasGame: true,
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
+            gameType: "promise",
+          },
+          6: {
+            name: "Kiss Day",
+            icon: KissIcon,
+            color: "from-red-500 to-pink-600",
+            message: "Sealed with a kiss, my love for you.",
+            quote:
+              '"A kiss is a lovely trick designed by nature to stop speech when words become superfluous."',
+            poem: "A gentle kiss, so soft and sweet,\nWhere love and passion gently meet.\nYour lips on mine, a perfect bliss,\nForever sealed with this one kiss.",
+            emoji: "💋",
+            bgColor: "from-red-50 via-pink-50 to-red-50",
+            date: "Feb 12",
+          },
+          7: {
+            name: "Hug Day",
+            icon: HugIcon,
+            color: "from-orange-400 to-amber-500",
+            message: "A virtual hug, until I can hold you close.",
+            quote: '"In your arms is where I belong."',
+            poem: "Arms around you, holding tight,\nEverything feels just right.\nIn this embrace, I find my peace,\nA love that will never cease.",
+            emoji: "🤗",
+            bgColor: "from-orange-50 via-amber-50 to-orange-50",
+            date: "Feb 13",
+          },
+          8: {
+            name: "Valentine's Day",
+            icon: HeartIcon,
+            color: "from-pink-600 to-rose-600",
+            message: "You are my Valentine, today and every day.",
+            quote:
+              '"I love you not only for what you are, but for what I am when I am with you."',
+            poem: "On this day of love so true,\nI give my heart completely to you.\nForever yours, my Valentine dear,\nI'll love you more with every year.",
+            emoji: "💕",
+            bgColor: "from-pink-50 via-rose-50 to-pink-50",
+            date: "Feb 14",
+          },
+        };
+
+        const day = dayContent[dayNumber] || dayContent[1];
+        const Icon = day.icon;
+
+        // Proposal game scenarios
+        const proposalScenarios = [
+          {
+            scene: 1,
+            speaker: "You",
+            text: '"I wanted to talk to you about something really important..."',
+            choices: [
+              {
+                emoji: "❤️",
+                text: "Be serious and romantic",
+                response: "perfect",
+              },
+              { emoji: "😊", text: "Make them laugh first", response: "sweet" },
+            ],
+          },
+          {
+            scene: 2,
+            speaker: "You",
+            text: '"You mean everything to me. Will you be my Valentine?"',
+            choices: [
+              {
+                emoji: "💍",
+                text: "Get down on one knee",
+                response: "perfect",
+              },
+              { emoji: "🎤", text: "Sing it instead", response: "creative" },
+            ],
+          },
+          {
+            scene: 3,
+            speaker: "You",
+            text: '"I promise to always make you smile and be there for you."',
+            choices: [
+              { emoji: "🌹", text: "Present a rose", response: "romantic" },
+              {
+                emoji: "💝",
+                text: "Show a heartfelt letter",
+                response: "touching",
+              },
+            ],
+          },
+          {
+            scene: 4,
+            speaker: "You",
+            text: '"So... what do you say?"',
+            choices: [
+              {
+                emoji: "🤗",
+                text: "Hold their hand gently",
+                response: "tender",
+              },
+              {
+                emoji: "😊",
+                text: "Look into their eyes",
+                response: "intimate",
+              },
+            ],
+          },
+          {
+            scene: 5,
+            speaker: "You",
+            text: '"I want to spend every Valentine\'s Day with you, forever."',
+            choices: [
+              { emoji: "💕", text: "Seal it with a hug", response: "complete" },
+              {
+                emoji: "⭐",
+                text: "Make a special promise",
+                response: "complete",
+              },
+            ],
+          },
+        ];
+
+        useEffect(() => {
+          if (revealed) {
+            setTimeout(() => setShowContent(true), 300);
+          }
+        }, [revealed]);
+
+        // Game logic - EXTREME MODE
+        useEffect(() => {
+          if (gameStarted && rosesCollected < 6) {
+            const interval = setInterval(() => {
+              const roseId = Date.now() + Math.random();
+              const animationDuration = 2 + Math.random() * 1.5; // 2-3.5 seconds - MUCH FASTER!
+              const tappableDelay = 0.5 + Math.random() * 0.5; // 0.5-1s delay
+              const tappableDuration = 0.5; // Only 500ms to tap - EXTREME!
+
+              const newRose = {
+                id: roseId,
+                left: Math.random() * 80 + 10, // 10% to 90%
+                animationDuration: animationDuration,
+                isTappable: false,
+              };
+
+              setFallingRoses((prev) => [...prev, newRose]);
+
+              // Make rose tappable after delay - ONLY ONE AT A TIME
+              setTimeout(() => {
+                setCurrentTappableRose(roseId);
+                setTappableRoses((prev) => new Set([roseId])); // Only this one is tappable
+
+                // Make rose untappable after very short duration
+                setTimeout(() => {
+                  setTappableRoses((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(roseId);
+                    return newSet;
+                  });
+                  if (currentTappableRose === roseId) {
+                    setCurrentTappableRose(null);
+                  }
+                }, tappableDuration * 1000);
+              }, tappableDelay * 1000);
+
+              // Remove rose after animation completes
+              setTimeout(() => {
+                setFallingRoses((prev) => prev.filter((r) => r.id !== roseId));
+                setTappableRoses((prev) => {
+                  const newSet = new Set(prev);
+                  newSet.delete(roseId);
+                  return newSet;
+                });
+              }, animationDuration * 1000);
+            }, 400); // Spawn every 400ms - MANY ROSES!
+
+            return () => clearInterval(interval);
+          }
+        }, [gameStarted, rosesCollected, currentTappableRose]);
+
+        // Chocolate game logic - Time-based collection
+        useEffect(() => {
+          if (gameActive && timeLeft > 0 && chocolatesCollected < 5) {
+            const timer = setInterval(() => {
+              setTimeLeft((prev) => Math.max(0, prev - 1));
+            }, 1000);
+            return () => clearInterval(timer);
+          } else if (timeLeft === 0 && gameActive) {
+            setGameActive(false);
+          }
+        }, [gameActive, timeLeft, chocolatesCollected]);
+
+        useEffect(() => {
+          if (gameActive && chocolatesCollected < 5) {
+            const spawnInterval = setInterval(() => {
+              const types = ["🍫", "🍬", "🍭"];
+              const isChocolate = Math.random() > 0.3; // 70% chance of chocolate appearing
+              const isTappable = isChocolate && Math.random() > 0.6; // Only 40% of chocolates are tappable!
+
+              const newItem = {
+                id: Date.now() + Math.random(),
+                emoji: isChocolate
+                  ? "🍫"
+                  : types[Math.floor(Math.random() * types.length)],
+                left: Math.random() * 80 + 10,
+                top: Math.random() * 60 + 10,
+                isChocolate: isChocolate,
+                isTappable: isTappable,
+                glowActive: false,
+              };
+              setChocolateItems((prev) => [...prev, newItem]);
+
+              // Make tappable items glow after 300ms delay
+              if (isTappable) {
+                setTimeout(() => {
+                  setChocolateItems((prev) =>
+                    prev.map((item) =>
+                      item.id === newItem.id
+                        ? { ...item, glowActive: true }
+                        : item,
+                    ),
+                  );
+
+                  // Remove glow after 400ms - VERY SHORT WINDOW!
+                  setTimeout(() => {
+                    setChocolateItems((prev) =>
+                      prev.map((item) =>
+                        item.id === newItem.id
+                          ? { ...item, glowActive: false }
+                          : item,
+                      ),
+                    );
+                  }, 400);
+                }, 300);
+              }
+
+              // Remove item after 2.5 seconds if not collected
+              setTimeout(() => {
+                setChocolateItems((prev) =>
+                  prev.filter((item) => item.id !== newItem.id),
+                );
+              }, 2500);
+            }, 400); // Spawn every 400ms - LOTS of items!
+
+            return () => clearInterval(spawnInterval);
+          }
+        }, [gameActive, chocolatesCollected]);
+
+        const handleChocolateClick = (item) => {
+          if (item.isChocolate && item.isTappable && item.glowActive) {
+            setChocolatesCollected((prev) => prev + 1);
+            setChocolateItems((prev) => prev.filter((i) => i.id !== item.id));
+          }
+        };
+
+        // Teddy game logic - Catching falling teddies
+        useEffect(() => {
+          if (teddyGameActive && teddiesCaught < 8) {
+            const spawnInterval = setInterval(() => {
+              const newTeddy = {
+                id: Date.now() + Math.random(),
+                left: Math.random() * 80 + 10, // 10% to 90%
+                speed: 2.5 + Math.random() * 1.5, // 2.5-4 seconds fall time
+                isTeddy: true,
+              };
+              setFallingTeddies((prev) => [...prev, newTeddy]);
+
+              // Remove after fall time and count as missed
+              setTimeout(() => {
+                setFallingTeddies((prev) => {
+                  const exists = prev.find((t) => t.id === newTeddy.id);
+                  if (exists) {
+                    setTeddiesMissed((m) => m + 1);
+                  }
+                  return prev.filter((t) => t.id !== newTeddy.id);
+                });
+              }, newTeddy.speed * 1000);
+            }, 800); // Spawn every 800ms
+
+            return () => clearInterval(spawnInterval);
+          }
+        }, [teddyGameActive, teddiesCaught]);
+
+        // Check for teddy catches
+        useEffect(() => {
+          const checkInterval = setInterval(() => {
+            fallingTeddies.forEach((teddy) => {
+              const teddyElement = document.getElementById(`teddy-${teddy.id}`);
+              const bucketElement = document.getElementById("bucket");
+
+              if (teddyElement && bucketElement) {
+                const teddyRect = teddyElement.getBoundingClientRect();
+                const bucketRect = bucketElement.getBoundingClientRect();
+
+                // Check if teddy is in bucket zone (bottom 80px of game area)
+                if (
+                  teddyRect.bottom >= bucketRect.top - 20 &&
+                  teddyRect.bottom <= bucketRect.bottom &&
+                  teddyRect.left + teddyRect.width / 2 >= bucketRect.left &&
+                  teddyRect.left + teddyRect.width / 2 <= bucketRect.right
+                ) {
+                  setTeddiesCaught((prev) => prev + 1);
+                  setFallingTeddies((prev) =>
+                    prev.filter((t) => t.id !== teddy.id),
+                  );
+                }
+              }
+            });
+          }, 50);
+
+          return () => clearInterval(checkInterval);
+        }, [fallingTeddies]);
+
+        // Mouse/Touch movement handlers
+        const handleBucketMove = (clientX, containerWidth) => {
+          const percentage = (clientX / containerWidth) * 100;
+          setBucketPosition(Math.max(5, Math.min(95, percentage)));
+        };
+
+        // Add mouse/touch tracking
+        useEffect(() => {
+          const gameArea = document.getElementById("teddy-game-area");
+          if (!gameArea || !teddyGameActive) return;
+
+          const handleMouseMove = (e) => {
+            const rect = gameArea.getBoundingClientRect();
+            handleBucketMove(e.clientX - rect.left, rect.width);
+          };
+
+          const handleTouchMove = (e) => {
+            e.preventDefault();
+            const rect = gameArea.getBoundingClientRect();
+            const touch = e.touches[0];
+            handleBucketMove(touch.clientX - rect.left, rect.width);
+          };
+
+          gameArea.addEventListener("mousemove", handleMouseMove);
+          gameArea.addEventListener("touchmove", handleTouchMove, {
+            passive: false,
+          });
+
+          return () => {
+            gameArea.removeEventListener("mousemove", handleMouseMove);
+            gameArea.removeEventListener("touchmove", handleTouchMove);
+          };
+        }, [teddyGameActive]);
+
+        const handleRoseClick = (roseId) => {
+          if (tappableRoses.has(roseId)) {
+            setFallingRoses((prev) => prev.filter((r) => r.id !== roseId));
+            setTappableRoses((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(roseId);
+              return newSet;
+            });
+            setRosesCollected((prev) => prev + 1);
+          }
+        };
+
+        const startGame = () => {
+          setGameStarted(true);
+          setRosesCollected(0);
+          setFallingRoses([]);
+          setTappableRoses(new Set());
+          setCurrentTappableRose(null);
+          setProposalScene(0);
+          setProposalComplete(false);
+          setSelectedChoices([]);
+          // Chocolate game
+          setChocolatesCollected(0);
+          setTimeLeft(30);
+          setChocolateItems([]);
+          setGameActive(true);
+          // Teddy game
+          setTeddiesCaught(0);
+          setTeddiesMissed(0);
+          setFallingTeddies([]);
+          setBucketPosition(50);
+          setTeddyGameActive(true);
+          // Promise game
+          initializePromiseGame();
+        };
+
+        const initializePromiseGame = () => {
+          const promises = [
+            "I promise to always listen to you",
+            "I promise to make you smile every day",
+            "I promise to support your dreams",
+            "I promise to be there in tough times",
+            "I promise to love you unconditionally",
+            "I promise to never let you feel alone",
+          ];
+
+          const cardPairs = promises.flatMap((promise, index) => [
+            {
+              id: `${index}-a`,
+              promiseId: index,
+              text: promise,
+              isMatched: false,
+              isFlipped: false,
+            },
+            {
+              id: `${index}-b`,
+              promiseId: index,
+              text: promise,
+              isMatched: false,
+              isFlipped: false,
+            },
+          ]);
+
+          // Shuffle cards
+          const shuffled = cardPairs.sort(() => Math.random() - 0.5);
+          setCards(shuffled);
+          setFlippedCards([]);
+          setMatchedCards([]);
+          setMoves(0);
+          setPromiseGameActive(true);
+        };
+
+        const handleCardClick = (cardId) => {
+          if (flippedCards.length === 2) return;
+          if (flippedCards.includes(cardId)) return;
+          if (matchedCards.includes(cardId)) return;
+
+          const newFlipped = [...flippedCards, cardId];
+          setFlippedCards(newFlipped);
+
+          if (newFlipped.length === 2) {
+            setMoves(moves + 1);
+            const [first, second] = newFlipped;
+            const firstCard = cards.find((c) => c.id === first);
+            const secondCard = cards.find((c) => c.id === second);
+
+            if (firstCard.promiseId === secondCard.promiseId) {
+              // Match found!
+              setTimeout(() => {
+                setMatchedCards([...matchedCards, first, second]);
+                setFlippedCards([]);
+              }, 600);
+            } else {
+              // No match
+              setTimeout(() => {
+                setFlippedCards([]);
+              }, 1000);
+            }
+          }
+        };
+
+        const handleProposalChoice = (choice) => {
+          setSelectedChoices([...selectedChoices, choice]);
+
+          if (proposalScene < proposalScenarios.length - 1) {
+            setProposalScene(proposalScene + 1);
+          } else {
+            setProposalComplete(true);
+          }
+        };
+
+        const handleReveal = () => {
+          setRevealed(true);
+        };
+
+        const goBack = () => {
+          navigate("/");
+        };
+
+        const goToNext = () => {
+          if (dayNumber < 8) {
+            navigate(`/day/${dayNumber + 1}`);
+          }
+        };
+
+        const goToPrevious = () => {
+          if (dayNumber > 1) {
+            navigate(`/day/${dayNumber - 1}`);
+          }
+        };
+
+        return (
+          <div className={`min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8`}>
+            <div className="max-w-4xl mx-auto">
+              {/* Navigation */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-between items-center mb-8"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.05, x: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={goBack}
+                  className="flex items-center gap-2 bg-gray-900 border border-red-900/30 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all text-gray-200 font-medium"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span>Back</span>
+                </motion.button>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-300 font-medium">
+                    Day {dayNumber} of 8
+                  </p>
+                  <p className="text-xs text-gray-500">{day.date}</p>
+                </div>
+
+                <div className="w-24"></div>
+              </motion.div>
+
+              {/* Main Content */}
+              <AnimatePresence mode="wait">
+                {!revealed ? (
+                  <motion.div
+                    key="reveal"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.4 }}
+                    className="max-w-2xl mx-auto"
+                  >
+                    <div className="bg-gray-900 border border-red-900/30 rounded-3xl shadow-2xl p-8 sm:p-12 text-center">
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.1, 1],
+                          rotate: [0, 5, -5, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                        }}
+                        className="mb-6"
+                      >
+                        <div
+                          className={`inline-block p-6 rounded-full bg-gradient-to-br ${day.color}`}
+                        >
+                          <div className="text-6xl">{day.emoji}</div>
+                        </div>
+                      </motion.div>
+                      <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+                        {day.name}
+                      </h1>
+                      <p className="text-xl text-gray-400 mb-8">
+                        A special surprise awaits you...
+                      </p>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleReveal}
+                        className={`bg-gradient-to-r ${day.color} text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 mx-auto`}
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <rect
+                            x="3"
+                            y="11"
+                            width="18"
+                            height="11"
+                            rx="2"
+                            ry="2"
+                            strokeWidth="2"
+                          />
+                          <path d="M7 11V7a5 5 0 0 1 9.9-1" strokeWidth="2" />
+                        </svg>
+                        <span>Reveal Surprise</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="content"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="max-w-3xl mx-auto"
+                  >
+                    <div className="bg-gray-900 border border-red-900/30 rounded-3xl shadow-2xl overflow-hidden">
+                      {/* Header */}
+                      <div
+                        className={`bg-gradient-to-r ${day.color} p-8 text-white text-center border-b border-red-900/30`}
+                      >
+                        <motion.div
+                          animate={{
+                            y: [0, -10, 0],
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                          }}
+                          className="text-7xl mb-4"
+                        >
+                          {day.emoji}
+                        </motion.div>
+                        <h2 className="text-3xl sm:text-4xl font-bold mb-2">
+                          {day.name}
+                        </h2>
+                        <p className="text-lg opacity-90">
+                          Day {dayNumber} - Valentine Week
+                        </p>
+                      </div>
+
+                      {/* Content */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.6 }}
+                        className="p-8 sm:p-12 space-y-8"
+                      >
+                        <div className="text-center">
+                          <p className="text-2xl text-gray-200 font-medium leading-relaxed">
+                            {day.message}
+                          </p>
+                        </div>
+
+                        <div className="border-l-4 border-red-600 pl-6 py-4 bg-red-950/30 rounded-r-lg">
+                          <p className="text-lg text-gray-300 italic">
+                            {day.quote}
+                          </p>
+                        </div>
+
+                        {/* Poem Section */}
+                        <div className="bg-gradient-to-br from-red-950/30 to-rose-950/30 border border-red-900/30 p-6 rounded-xl">
+                          <h3 className="text-xl font-bold text-gray-200 mb-4 flex items-center gap-2">
+                            <span className="text-red-500">❤️</span>
+                            <span>A Poem For You</span>
+                          </h3>
+                          <p
+                            className="text-gray-300 leading-relaxed whitespace-pre-line text-center text-lg"
+                            style={{ fontFamily: "Georgia, serif" }}
+                          >
+                            {day.poem}
+                          </p>
+                        </div>
+
+                        {/* Spotify Music Section */}
+                        {day.hasGame && (
+                          <div className="bg-gray-900 border border-red-900/30 rounded-xl p-6">
+                            <h3 className="text-xl font-bold text-gray-200 mb-4 flex items-center gap-2">
+                              <span className="text-2xl">🎵</span>
+                              <span>Music for {day.name}</span>
+                            </h3>
+
+                            <div className="bg-red-950/30 border border-red-900/30 rounded-lg p-4 mb-4">
+                              <p className="text-sm text-gray-400 mb-2">
+                                Now Playing
+                              </p>
+                              <p className="font-bold text-gray-200">Raabta</p>
+                              <p className="text-sm text-gray-400">
+                                by Arijit Singh
+                              </p>
+                              <div className="mt-2">
+                                <span className="text-red-500 text-2xl">
+                                  🎶
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="rounded-xl overflow-hidden shadow-sm">
+                              <iframe
+                                data-testid="embed-iframe"
+                                style={{ borderRadius: "12px" }}
+                                src={day.spotifyEmbed}
+                                width="100%"
+                                height="352"
+                                frameBorder="0"
+                                allowFullScreen=""
+                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                loading="lazy"
+                              ></iframe>
+                            </div>
+
+                            <p className="text-sm text-gray-400 mt-4 text-center">
+                              Enjoy the music as you explore {day.name}. The
+                              music will automatically change when you complete
+                              the activity.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Proposal Game - Only for Propose Day */}
+                        {day.gameType === "proposal" && (
+                          <div className="bg-gray-900 border border-red-900/30 rounded-xl p-6">
+                            {!gameStarted ? (
+                              <div className="text-center py-12">
+                                <motion.div
+                                  animate={{
+                                    y: [0, -10, 0],
+                                    rotate: [0, 10, -10, 0],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "reverse",
+                                  }}
+                                  className="text-7xl mb-6"
+                                >
+                                  💍
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                  The Proposal
+                                </h3>
+                                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                  Choose the right dialogue options to
+                                  successfully propose. Wrong choices lead to
+                                  funny, cute responses!
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-pink-600 to-rose-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Start Game
+                                </motion.button>
+                              </div>
+                            ) : proposalComplete ? (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center py-12 relative"
+                              >
+                                {/* Floating hearts */}
+                                {[...Array(8)].map((_, i) => (
+                                  <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, y: 0 }}
+                                    animate={{
+                                      opacity: [0, 1, 0],
+                                      y: [-20, -100],
+                                      x: [0, (Math.random() - 0.5) * 100],
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      delay: i * 0.2,
+                                      repeat: Infinity,
+                                      repeatDelay: 1,
+                                    }}
+                                    className="absolute text-4xl"
+                                    style={{
+                                      left: `${20 + Math.random() * 60}%`,
+                                      top: "50%",
+                                    }}
+                                  >
+                                    💕
+                                  </motion.div>
+                                ))}
+
+                                <div className="relative z-10">
+                                  <div className="text-7xl mb-4">🎉</div>
+                                  <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-500 mb-2">
+                                    ✨ Wonderful! ✨
+                                  </h3>
+                                  <div className="text-6xl my-6">
+                                    💍 YES! 💍
+                                  </div>
+                                  <p className="text-xl text-gray-300 font-semibold mb-2">
+                                    What a perfect proposal!
+                                  </p>
+                                  <p className="text-gray-400 mb-8">
+                                    You've unlocked a special moment for Propose
+                                    Day. Come back tomorrow for the next
+                                    surprise!
+                                  </p>
+
+                                  <div className="bg-purple-950/30 border border-purple-900/50 rounded-lg p-4 mb-6 inline-block">
+                                    <p className="text-purple-300 text-sm flex items-center gap-2">
+                                      <span>✨</span>
+                                      <span>
+                                        Second song unlocked! Enjoy the rest of
+                                        your experience.
+                                      </span>
+                                    </p>
+                                  </div>
+
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={startGame}
+                                    className="bg-gradient-to-r from-pink-600 to-rose-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                  >
+                                    Play Again
+                                  </motion.button>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <div className="space-y-6">
+                                {/* Progress indicator */}
+                                <div className="text-center text-sm text-gray-400 mb-4">
+                                  Scene {proposalScene + 1} of{" "}
+                                  {proposalScenarios.length}
+                                </div>
+
+                                {/* Dialogue box */}
+                                <motion.div
+                                  key={proposalScene}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.4 }}
+                                  className="bg-pink-950/30 border border-pink-900/50 rounded-xl p-6"
+                                >
+                                  <p className="text-xs text-pink-400 mb-2">
+                                    {proposalScenarios[proposalScene].speaker}
+                                  </p>
+                                  <p className="text-lg text-gray-200 leading-relaxed">
+                                    {proposalScenarios[proposalScene].text}
+                                  </p>
+                                </motion.div>
+
+                                {/* Choice buttons */}
+                                <div className="space-y-3">
+                                  {proposalScenarios[proposalScene].choices.map(
+                                    (choice, index) => (
+                                      <motion.button
+                                        key={index}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{
+                                          delay: 0.2 + index * 0.1,
+                                        }}
+                                        whileHover={{ scale: 1.02, x: 10 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() =>
+                                          handleProposalChoice(choice)
+                                        }
+                                        className="w-full bg-gray-900 hover:bg-gray-800 border border-pink-900/30 hover:border-pink-700/50 rounded-xl p-4 text-left transition-all group"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <span className="text-3xl group-hover:scale-110 transition-transform">
+                                            {choice.emoji}
+                                          </span>
+                                          <span className="text-gray-200 group-hover:text-white transition-colors">
+                                            {choice.text}
+                                          </span>
+                                        </div>
+                                      </motion.button>
+                                    ),
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Promise Matching Game - Only for Promise Day */}
+                        {day.gameType === "promise" && (
+                          <div className="bg-gray-900 border border-blue-900/30 rounded-xl p-6">
+                            {!gameStarted ? (
+                              <div className="text-center py-12">
+                                <motion.div
+                                  animate={{
+                                    y: [0, -10, 0],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "reverse",
+                                  }}
+                                  className="text-7xl mb-6"
+                                >
+                                  🤝
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                  Match the Promises
+                                </h3>
+                                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                  Find matching promise cards. Each pair reveals
+                                  a heartfelt promise for your special someone.
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-blue-600 to-cyan-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Start Game
+                                </motion.button>
+                              </div>
+                            ) : matchedCards.length === cards.length ? (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center py-12"
+                              >
+                                <div className="text-7xl mb-4">🎉</div>
+                                <h3 className="text-2xl font-bold text-blue-400 mb-4">
+                                  All Promises Matched!
+                                </h3>
+                                <p className="text-gray-300 mb-6">
+                                  You found all the promises in {moves} moves!
+                                  💙
+                                </p>
+                                <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-4 mb-6 inline-block">
+                                  <p className="text-blue-300 text-sm">
+                                    ✨ All heartfelt promises revealed! ✨
+                                  </p>
+                                </div>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-blue-600 to-cyan-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Play Again
+                                </motion.button>
+                              </motion.div>
+                            ) : (
+                              <div>
+                                {/* Score Display */}
+                                <div className="bg-blue-950/30 border border-blue-900/30 p-4 rounded-lg text-center mb-6">
+                                  <p className="text-sm text-blue-400 mb-1">
+                                    Matches Found
+                                  </p>
+                                  <p className="text-3xl font-bold text-blue-300">
+                                    {matchedCards.length / 2}/6
+                                  </p>
+                                </div>
+
+                                {/* Cards Grid */}
+                                <div className="grid grid-cols-3 gap-4">
+                                  {cards.map((card) => {
+                                    const isFlipped =
+                                      flippedCards.includes(card.id) ||
+                                      matchedCards.includes(card.id);
+                                    const isMatched = matchedCards.includes(
+                                      card.id,
+                                    );
+
+                                    return (
+                                      <motion.div
+                                        key={card.id}
+                                        whileHover={{
+                                          scale: isFlipped ? 1 : 1.02,
+                                        }}
+                                        whileTap={{
+                                          scale: isFlipped ? 1 : 0.98,
+                                        }}
+                                        onClick={() => handleCardClick(card.id)}
+                                        className={`relative h-32 cursor-pointer rounded-xl transition-all ${
+                                          isMatched ? "opacity-70" : ""
+                                        }`}
+                                        style={{ perspective: "1000px" }}
+                                      >
+                                        <motion.div
+                                          className="w-full h-full relative"
+                                          animate={{
+                                            rotateY: isFlipped ? 180 : 0,
+                                          }}
+                                          transition={{ duration: 0.4 }}
+                                          style={{
+                                            transformStyle: "preserve-3d",
+                                          }}
+                                        >
+                                          {/* Card Back */}
+                                          <div
+                                            className="absolute w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 border-2 border-gray-600 rounded-xl flex items-center justify-center"
+                                            style={{
+                                              backfaceVisibility: "hidden",
+                                            }}
+                                          >
+                                            <span className="text-4xl">❤️</span>
+                                          </div>
+
+                                          {/* Card Front */}
+                                          <div
+                                            className="absolute w-full h-full bg-gradient-to-br from-blue-600 to-cyan-700 border-2 border-blue-500 rounded-xl flex items-center justify-center p-3"
+                                            style={{
+                                              backfaceVisibility: "hidden",
+                                              transform: "rotateY(180deg)",
+                                            }}
+                                          >
+                                            <p className="text-white text-xs text-center leading-tight font-medium">
+                                              {card.text}
+                                            </p>
+                                          </div>
+                                        </motion.div>
+                                      </motion.div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Teddy Catching Game - Only for Teddy Day */}
+                        {day.gameType === "teddy" && (
+                          <div className="bg-gray-900 border border-yellow-900/30 rounded-xl p-6">
+                            {!gameStarted ? (
+                              <div className="text-center py-12">
+                                <motion.div
+                                  animate={{
+                                    y: [0, -10, 0],
+                                    rotate: [0, 5, -5, 0],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "reverse",
+                                  }}
+                                  className="text-7xl mb-6"
+                                >
+                                  🧸
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                  Catch the Teddies
+                                </h3>
+                                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                  Move the bucket to catch falling teddy bears!
+                                  Catch 8 teddies, but miss 3 and it's game
+                                  over!
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-yellow-600 to-amber-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Start Game
+                                </motion.button>
+                              </div>
+                            ) : teddiesCaught >= 8 || teddiesMissed >= 3 ? (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center py-12"
+                              >
+                                {teddiesCaught >= 8 ? (
+                                  <>
+                                    <div className="text-7xl mb-4">🎉</div>
+                                    <h3 className="text-2xl font-bold text-yellow-400 mb-4">
+                                      Perfect Catch!
+                                    </h3>
+                                    <p className="text-gray-300 mb-6">
+                                      You caught all 8 teddy bears! You're a
+                                      catching champion! 🧸
+                                    </p>
+                                    <div className="bg-yellow-950/30 border border-yellow-900/50 rounded-lg p-4 mb-6 inline-block">
+                                      <p className="text-yellow-300 text-sm">
+                                        ✨ Teddy collection complete! ✨
+                                      </p>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="text-7xl mb-4">😢</div>
+                                    <h3 className="text-2xl font-bold text-gray-300 mb-4">
+                                      Game Over!
+                                    </h3>
+                                    <p className="text-gray-400 mb-6">
+                                      You missed too many teddies! Caught:{" "}
+                                      {teddiesCaught}/8
+                                    </p>
+                                  </>
+                                )}
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-yellow-600 to-amber-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Play Again
+                                </motion.button>
+                              </motion.div>
+                            ) : (
+                              <div>
+                                {/* Score Display */}
+                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                  <div className="bg-blue-950/30 border border-blue-900/30 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-blue-400 mb-1">
+                                      Caught
+                                    </p>
+                                    <p className="text-2xl font-bold text-blue-300">
+                                      {teddiesCaught}/8
+                                    </p>
+                                  </div>
+                                  <div className="bg-red-950/30 border border-red-900/30 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-red-400 mb-1">
+                                      Missed
+                                    </p>
+                                    <p className="text-2xl font-bold text-red-300">
+                                      {teddiesMissed}/3
+                                    </p>
+                                  </div>
+                                  <div className="bg-purple-950/30 border border-purple-900/30 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-purple-400 mb-1">
+                                      Progress
+                                    </p>
+                                    <p className="text-2xl font-bold text-purple-300">
+                                      {Math.round((teddiesCaught / 8) * 100)}%
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Game Area */}
+                                <div
+                                  id="teddy-game-area"
+                                  className="relative bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border border-blue-900/30 rounded-lg overflow-hidden cursor-move select-none"
+                                  style={{
+                                    height: "450px",
+                                    touchAction: "none",
+                                  }}
+                                >
+                                  <div className="absolute top-4 left-0 right-0 text-center">
+                                    <p className="text-sm text-blue-300 bg-blue-950/80 border border-blue-900/50 rounded-full px-4 py-2 inline-block font-semibold">
+                                      🖱️ Move to catch! | 📱 Drag/Swipe to move!
+                                    </p>
+                                  </div>
+
+                                  {/* Falling Teddies */}
+                                  {fallingTeddies.map((teddy) => (
+                                    <motion.div
+                                      key={teddy.id}
+                                      id={`teddy-${teddy.id}`}
+                                      initial={{ y: -60, x: 0 }}
+                                      animate={{ y: 450 }}
+                                      transition={{
+                                        duration: teddy.speed,
+                                        ease: "linear",
+                                      }}
+                                      className="absolute pointer-events-none"
+                                      style={{
+                                        left: `${teddy.left}%`,
+                                        fontSize: "48px",
+                                      }}
+                                    >
+                                      🧸
+                                    </motion.div>
+                                  ))}
+
+                                  {/* Bucket */}
+                                  <motion.div
+                                    id="bucket"
+                                    animate={{ left: `${bucketPosition}%` }}
+                                    transition={{
+                                      type: "tween",
+                                      duration: 0.05,
+                                    }}
+                                    className="absolute bottom-4 pointer-events-none"
+                                    style={{
+                                      fontSize: "64px",
+                                      transform: "translateX(-50%)",
+                                      filter:
+                                        "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))",
+                                    }}
+                                  >
+                                    🪣
+                                  </motion.div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Chocolate Collection Game - Only for Chocolate Day */}
+                        {day.gameType === "chocolate" && (
+                          <div className="bg-gray-900 border border-amber-900/30 rounded-xl p-6">
+                            {!gameStarted ? (
+                              <div className="text-center py-12">
+                                <motion.div
+                                  animate={{
+                                    y: [0, -10, 0],
+                                    rotate: [0, 5, -5, 0],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "reverse",
+                                  }}
+                                  className="text-7xl mb-6"
+                                >
+                                  🍫
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                  Chocolate Collection
+                                </h3>
+                                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                  Collect 5 chocolates before time runs out!
+                                  Click only on chocolates 🍫, avoid other
+                                  candies!
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-amber-600 to-orange-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Start Game
+                                </motion.button>
+                              </div>
+                            ) : chocolatesCollected >= 5 ||
+                              (timeLeft === 0 && chocolatesCollected < 5) ? (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center py-12"
+                              >
+                                {chocolatesCollected >= 5 ? (
+                                  <>
+                                    <div className="text-7xl mb-4">🎉</div>
+                                    <h3 className="text-2xl font-bold text-amber-400 mb-4">
+                                      Sweet Success!
+                                    </h3>
+                                    <p className="text-gray-300 mb-6">
+                                      You collected all the chocolates! Enjoy
+                                      your sweet reward! 🍫
+                                    </p>
+                                    <div className="bg-amber-950/30 border border-amber-900/50 rounded-lg p-4 mb-6 inline-block">
+                                      <p className="text-amber-300 text-sm">
+                                        ✨ You unlocked the chocolate box! ✨
+                                      </p>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="text-7xl mb-4">⏰</div>
+                                    <h3 className="text-2xl font-bold text-gray-300 mb-4">
+                                      Time's Up!
+                                    </h3>
+                                    <p className="text-gray-400 mb-6">
+                                      You collected {chocolatesCollected}/5
+                                      chocolates. Try again!
+                                    </p>
+                                  </>
+                                )}
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-amber-600 to-orange-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Play Again
+                                </motion.button>
+                              </motion.div>
+                            ) : (
+                              <div>
+                                {/* Score and Timer */}
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                  <div className="bg-amber-950/30 border border-amber-900/30 p-4 rounded-lg text-center">
+                                    <p className="text-sm text-amber-400 mb-1">
+                                      Chocolates Collected
+                                    </p>
+                                    <p className="text-3xl font-bold text-amber-300">
+                                      {chocolatesCollected}/5
+                                    </p>
+                                  </div>
+                                  <div className="bg-orange-950/30 border border-orange-900/30 p-4 rounded-lg text-center">
+                                    <p className="text-sm text-orange-400 mb-1">
+                                      Time Left
+                                    </p>
+                                    <p className="text-3xl font-bold text-orange-300">
+                                      {timeLeft}s
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Game Area */}
+                                <div
+                                  className="relative bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-900/30 rounded-lg overflow-hidden"
+                                  style={{ height: "400px" }}
+                                >
+                                  <div className="absolute top-4 left-0 right-0 text-center">
+                                    <p className="text-sm text-amber-300 bg-amber-950/80 border border-amber-900/50 rounded-full px-4 py-2 inline-block font-semibold">
+                                      ⚡ EXTREME: Tap GLOWING 🍫 only! 400ms
+                                      window! Many fake chocolates!
+                                    </p>
+                                  </div>
+
+                                  {/* Gift Box at bottom right */}
+                                  <div className="absolute bottom-4 right-4 text-6xl opacity-50">
+                                    🎁
+                                  </div>
+
+                                  {/* Spawning Items */}
+                                  {chocolateItems.map((item) => (
+                                    <motion.div
+                                      key={item.id}
+                                      initial={{ scale: 0, opacity: 0 }}
+                                      animate={{
+                                        scale: item.glowActive ? 1.3 : 1,
+                                        opacity:
+                                          item.isChocolate && !item.isTappable
+                                            ? 0.4
+                                            : 1,
+                                      }}
+                                      exit={{ scale: 0, opacity: 0 }}
+                                      whileHover={{
+                                        scale: item.glowActive ? 1.4 : 1.1,
+                                      }}
+                                      onClick={() => handleChocolateClick(item)}
+                                      className={`absolute ${item.glowActive ? "cursor-pointer z-50" : "cursor-not-allowed z-10"}`}
+                                      style={{
+                                        left: `${item.left}%`,
+                                        top: `${item.top}%`,
+                                        fontSize: "52px",
+                                        filter: item.glowActive
+                                          ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 165, 0, 1)) drop-shadow(0 0 40px rgba(255, 140, 0, 0.8))"
+                                          : item.isChocolate && !item.isTappable
+                                            ? "brightness(0.5) grayscale(0.7)"
+                                            : "brightness(1)",
+                                        textShadow: item.glowActive
+                                          ? "0 0 30px rgba(255, 165, 0, 1), 0 0 60px rgba(255, 140, 0, 0.8)"
+                                          : "none",
+                                      }}
+                                    >
+                                      {item.emoji}
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Rose Collection Game - Only for Rose Day */}
+                        {day.gameType !== "proposal" &&
+                          day.gameType !== "chocolate" &&
+                          day.gameType !== "teddy" &&
+                          day.gameType !== "promise" &&
+                          day.hasGame && (
+                            <div className="bg-gray-900 border border-red-900/30 rounded-xl p-6">
+                              {!gameStarted ? (
+                                <div className="text-center py-12">
+                                  <motion.div
+                                    animate={{
+                                      y: [0, -10, 0],
+                                      rotate: [0, 5, -5, 0],
+                                    }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      repeatType: "reverse",
+                                    }}
+                                    className="text-7xl mb-6"
+                                  >
+                                    🌹
+                                  </motion.div>
+                                  <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                    Collect the Roses
+                                  </h3>
+                                  <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                    Tap on the falling roses to collect them
+                                    into a beautiful bouquet. Each rose carries
+                                    a sweet message!
+                                  </p>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={startGame}
+                                    className="bg-gradient-to-r from-red-600 to-red-800 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                  >
+                                    Start Game
+                                  </motion.button>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="flex items-center justify-between mb-4 bg-red-950/30 border border-red-900/30 p-4 rounded-lg">
+                                    <div>
+                                      <p className="font-bold text-gray-200">
+                                        Roses: {rosesCollected}/6
+                                      </p>
+                                    </div>
+                                    <div className="text-sm text-gray-400">
+                                      Tap the glowing rose!
+                                    </div>
+                                  </div>
+
+                                  {rosesCollected >= 6 ? (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0.9 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      className="text-center py-12"
+                                    >
+                                      <div className="text-7xl mb-4">🎉</div>
+                                      <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                        Congratulations!
+                                      </h3>
+                                      <p className="text-gray-400 mb-6">
+                                        You collected all the roses into a
+                                        beautiful bouquet! 💐
+                                      </p>
+                                      <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={startGame}
+                                        className="bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                      >
+                                        Play Again
+                                      </motion.button>
+                                    </motion.div>
+                                  ) : (
+                                    <div
+                                      className="relative bg-gradient-to-br from-black to-gray-950 border border-red-900/30 rounded-lg overflow-hidden"
+                                      style={{ height: "500px" }}
+                                    >
+                                      {fallingRoses.map((rose) => {
+                                        const isTappable = tappableRoses.has(
+                                          rose.id,
+                                        );
+                                        return (
+                                          <motion.div
+                                            key={rose.id}
+                                            initial={{
+                                              y: -50,
+                                              x: 0,
+                                              scale: 0.8,
+                                            }}
+                                            animate={{
+                                              y: 550,
+                                              scale: isTappable ? 1.3 : 0.85,
+                                              rotate: isTappable
+                                                ? [0, -15, 15, 0]
+                                                : 0,
+                                            }}
+                                            transition={{
+                                              y: {
+                                                duration:
+                                                  rose.animationDuration,
+                                                ease: "linear",
+                                              },
+                                              scale: { duration: 0.2 },
+                                              rotate: {
+                                                duration: 0.3,
+                                                repeat: isTappable
+                                                  ? Infinity
+                                                  : 0,
+                                              },
+                                            }}
+                                            onClick={() =>
+                                              handleRoseClick(rose.id)
+                                            }
+                                            className={`absolute transition-all ${isTappable ? "cursor-pointer z-50" : "cursor-not-allowed opacity-30 z-10"}`}
+                                            style={{
+                                              left: `${rose.left}%`,
+                                              fontSize: "52px",
+                                              filter: isTappable
+                                                ? "brightness(1.5) drop-shadow(0 0 20px rgba(255, 0, 0, 1)) drop-shadow(0 0 40px rgba(255, 20, 147, 0.8))"
+                                                : "brightness(0.4) grayscale(0.6)",
+                                              textShadow: isTappable
+                                                ? "0 0 30px rgba(255, 0, 0, 1), 0 0 60px rgba(255, 20, 147, 0.8)"
+                                                : "none",
+                                              transform: isTappable
+                                                ? "scale(1.2)"
+                                                : "scale(1)",
+                                            }}
+                                          >
+                                            🌹
+                                          </motion.div>
+                                        );
+                                      })}
+
+                                      {/* Helpful hint */}
+                                      {fallingRoses.length > 0 && (
+                                        <div className="absolute bottom-4 left-0 right-0 text-center z-40">
+                                          <p className="text-xs text-gray-300 bg-red-950/90 border border-red-900/50 rounded-full px-4 py-2 inline-block font-semibold">
+                                            ⚡ EXTREME MODE: Only 0.5s window!
+                                            Tap the GLOWING rose!
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        {/* Navigation Buttons - Only for non-Rose Day */}
+                        {!day.hasGame && (
+                          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                            <motion.button
+                              whileHover={{ scale: dayNumber > 1 ? 1.02 : 1 }}
+                              whileTap={{ scale: dayNumber > 1 ? 0.98 : 1 }}
+                              onClick={goToPrevious}
+                              disabled={dayNumber === 1}
+                              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+                                dayNumber === 1
+                                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                  : "bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:shadow-lg"
+                              }`}
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 19l-7-7 7-7"
+                                />
+                              </svg>
+                              <span>Previous Day</span>
+                            </motion.button>
+
+                            <motion.button
+                              whileHover={{ scale: dayNumber < 8 ? 1.02 : 1 }}
+                              whileTap={{ scale: dayNumber < 8 ? 0.98 : 1 }}
+                              onClick={goToNext}
+                              disabled={dayNumber === 8}
+                              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+                                dayNumber === 8
+                                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                  : `bg-gradient-to-r ${day.color} text-white hover:shadow-lg`
+                              }`}
+                            >
+                              <span>Next Day</span>
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </motion.button>
+                          </div>
+                        )}
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Footer */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="text-center mt-12"
+              >
+                <p className="text-gray-400 flex items-center justify-center gap-2">
+                  <span>Created with</span>
+                  <motion.span
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="text-red-500"
+                  >
+                    ❤️
+                  </motion.span>
+                  <span>just for you</span>
+                </p>
+              </motion.div>
+            </div>
+          </div>
+        );
+      };
+
+      // Render the app
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
     </script>
   </body>
 </html>
