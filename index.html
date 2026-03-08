@@ -396,6 +396,26 @@
         const [moves, setMoves] = useState(0);
         const [promiseGameActive, setPromiseGameActive] = useState(false);
 
+        // Kiss interaction states
+        const [kissTightness, setKissTightness] = useState(0);
+        const [isKissing, setIsKissing] = useState(false);
+        const [kissComplete, setKissComplete] = useState(false);
+        const [showKissFeedback, setShowKissFeedback] = useState("");
+
+        // Hug interaction states
+        const [hugWarmth, setHugWarmth] = useState(0);
+        const [isHugging, setIsHugging] = useState(false);
+        const [hugComplete, setHugComplete] = useState(false);
+        const [showHugFeedback, setShowHugFeedback] = useState("");
+        const [heartsCollected, setHeartsCollected] = useState(0);
+        const [floatingHearts, setFloatingHearts] = useState([]);
+
+        // Valentine's Day states
+        const [valentinePhase, setValentinePhase] = useState("memories"); // "memories" | "letter" | "question" | "yes"
+        const [memorySlide, setMemorySlide] = useState(0);
+        const [noButtonPos, setNoButtonPos] = useState({ x: 0, y: 0 });
+        const [valentineAnswered, setValentineAnswered] = useState(false);
+
         const dayContent = {
           1: {
             name: "Rose Day",
@@ -485,6 +505,10 @@
             emoji: "💋",
             bgColor: "from-red-50 via-pink-50 to-red-50",
             date: "Feb 12",
+            hasGame: true,
+            gameType: "kiss",
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
           },
           7: {
             name: "Hug Day",
@@ -496,6 +520,10 @@
             emoji: "🤗",
             bgColor: "from-orange-50 via-amber-50 to-orange-50",
             date: "Feb 13",
+            hasGame: true,
+            gameType: "hug",
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
           },
           8: {
             name: "Valentine's Day",
@@ -508,6 +536,10 @@
             emoji: "💕",
             bgColor: "from-pink-50 via-rose-50 to-pink-50",
             date: "Feb 14",
+            hasGame: true,
+            gameType: "valentine",
+            spotifyEmbed:
+              "https://open.spotify.com/embed/track/6FjbAnaPRPwiP3sciEYctO?utm_source=generator",
           },
         };
 
@@ -532,7 +564,7 @@
           {
             scene: 2,
             speaker: "You",
-            text: '"You mean everything to me. Will you be my Valentine?"',
+            text: '"You mean everything to me. Will you be my understanding partner till my last breath?"',
             choices: [
               {
                 emoji: "💍",
@@ -811,6 +843,74 @@
           };
         }, [teddyGameActive]);
 
+        // Global drag handlers for kiss interaction
+        useEffect(() => {
+          const handleGlobalMouseMove = (e) => {
+            if (isKissing) {
+              const container = document.querySelector(
+                '[data-kiss-container="true"]',
+              );
+              if (container) {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX;
+                const relativeX = x - rect.left;
+                const percentage = Math.max(
+                  0,
+                  Math.min(100, (relativeX / rect.width) * 100),
+                );
+                setKissTightness(percentage);
+              }
+            }
+          };
+
+          const handleGlobalTouchMove = (e) => {
+            if (isKissing) {
+              e.preventDefault();
+              const container = document.querySelector(
+                '[data-kiss-container="true"]',
+              );
+              if (container) {
+                const rect = container.getBoundingClientRect();
+                const touch = e.touches[0];
+                const relativeX = touch.clientX - rect.left;
+                const percentage = Math.max(
+                  0,
+                  Math.min(100, (relativeX / rect.width) * 100),
+                );
+                setKissTightness(percentage);
+              }
+            }
+          };
+
+          const handleGlobalMouseUp = () => {
+            if (isKissing) {
+              handleKissEnd();
+            }
+          };
+
+          const handleGlobalTouchEnd = () => {
+            if (isKissing) {
+              handleKissEnd();
+            }
+          };
+
+          if (isKissing) {
+            document.addEventListener("mousemove", handleGlobalMouseMove);
+            document.addEventListener("mouseup", handleGlobalMouseUp);
+            document.addEventListener("touchmove", handleGlobalTouchMove, {
+              passive: false,
+            });
+            document.addEventListener("touchend", handleGlobalTouchEnd);
+          }
+
+          return () => {
+            document.removeEventListener("mousemove", handleGlobalMouseMove);
+            document.removeEventListener("mouseup", handleGlobalMouseUp);
+            document.removeEventListener("touchmove", handleGlobalTouchMove);
+            document.removeEventListener("touchend", handleGlobalTouchEnd);
+          };
+        }, [isKissing, kissTightness]);
+
         const handleRoseClick = (roseId) => {
           if (tappableRoses.has(roseId)) {
             setFallingRoses((prev) => prev.filter((r) => r.id !== roseId));
@@ -845,6 +945,18 @@
           setTeddyGameActive(true);
           // Promise game
           initializePromiseGame();
+          // Kiss interaction
+          setKissTightness(0);
+          setIsKissing(false);
+          setKissComplete(false);
+          setShowKissFeedback("");
+          // Hug interaction
+          setHugWarmth(0);
+          setIsHugging(false);
+          setHugComplete(false);
+          setShowHugFeedback("");
+          setHeartsCollected(0);
+          setFloatingHearts([]);
         };
 
         const initializePromiseGame = () => {
@@ -920,6 +1032,158 @@
           } else {
             setProposalComplete(true);
           }
+        };
+
+        // Kiss interaction handlers
+        const handleKissStart = (e) => {
+          e.preventDefault();
+          setIsKissing(true);
+          setShowKissFeedback("");
+
+          // Start increasing tightness automatically
+          const interval = setInterval(() => {
+            setKissTightness((prev) => {
+              const newTightness = Math.min(prev + 2, 100);
+              return newTightness;
+            });
+          }, 50);
+
+          // Store interval ID to clear on end
+          window.kissInterval = interval;
+        };
+
+        const handleKissEnd = () => {
+          if (!isKissing) return;
+
+          setIsKissing(false);
+
+          // Clear the interval
+          if (window.kissInterval) {
+            clearInterval(window.kissInterval);
+            window.kissInterval = null;
+          }
+
+          // Always show feedback after every attempt
+          if (kissTightness >= 80 && kissTightness <= 90) {
+            setKissComplete(true);
+            setShowKissFeedback("Perfect! 💋 That was just right!");
+          } else if (kissTightness < 80) {
+            setShowKissFeedback("Too gentle... try a bit more passion 💕");
+          } else if (kissTightness > 90) {
+            setShowKissFeedback("Too intense! Save some passion for later 🔥");
+          } else if (kissTightness === 0) {
+            setShowKissFeedback("Too quick! Hold longer for a proper kiss 😊");
+          }
+
+          // Reset after feedback (but keep completion state)
+          setTimeout(() => {
+            setKissTightness(0);
+            if (!kissComplete) {
+              setShowKissFeedback("");
+            }
+          }, 2500);
+        };
+
+        const handleKissMove = (e) => {
+          if (!isKissing) return;
+
+          const container =
+            e.currentTarget ||
+            document.querySelector('[data-kiss-container="true"]');
+          if (!container) return;
+
+          const rect = container.getBoundingClientRect();
+          const x = e.clientX || (e.touches && e.touches[0].clientX);
+          const relativeX = x - rect.left;
+          const percentage = Math.max(
+            0,
+            Math.min(100, (relativeX / rect.width) * 100),
+          );
+          setKissTightness(percentage);
+        };
+
+        const handleKissChange = (e) => {
+          if (isKissing) {
+            setKissTightness(Number(e.target.value));
+          }
+        };
+
+        // Hug interaction handlers
+        const handleHugStart = (e) => {
+          e.preventDefault();
+          setIsHugging(true);
+          setShowHugFeedback("");
+          setHugWarmth(0);
+
+          // Start generating floating hearts
+          const heartInterval = setInterval(() => {
+            const newHeart = {
+              id: Date.now() + Math.random(),
+              left: Math.random() * 80 + 10,
+              animationDuration: 3 + Math.random() * 2,
+              isTappable: false,
+            };
+
+            setFloatingHearts((prev) => [...prev.slice(-4), newHeart]);
+
+            // Make heart tappable after a delay
+            setTimeout(
+              () => {
+                setFloatingHearts((prev) =>
+                  prev.map((heart) =>
+                    heart.id === newHeart.id
+                      ? { ...heart, isTappable: true }
+                      : heart,
+                  ),
+                );
+              },
+              1000 + Math.random() * 1000,
+            );
+          }, 800);
+
+          window.hugInterval = heartInterval;
+        };
+
+        const handleHugEnd = () => {
+          if (!isHugging) return;
+
+          setIsHugging(false);
+
+          // Clear the interval
+          if (window.hugInterval) {
+            clearInterval(window.hugInterval);
+            window.hugInterval = null;
+          }
+
+          // Evaluate hug warmth
+          if (hugWarmth >= 60 && hugWarmth <= 90) {
+            setHugComplete(true);
+            setShowHugFeedback("Perfect! 🤗 That was the warmest hug!");
+          } else if (hugWarmth < 60) {
+            setShowHugFeedback("Too weak... hug with more warmth! 💪");
+          } else if (hugWarmth > 90) {
+            setShowHugFeedback("Too tight! Save some squeeze for later 😅");
+          } else if (hugWarmth === 0) {
+            setShowHugFeedback("Too quick! Hold longer for a proper hug 🤗");
+          }
+
+          // Reset after feedback
+          setTimeout(() => {
+            setHugWarmth(0);
+            if (!hugComplete) {
+              setShowHugFeedback("");
+            }
+          }, 2500);
+        };
+
+        const handleHeartClick = (heartId) => {
+          setFloatingHearts((prev) =>
+            prev.filter((heart) => heart.id !== heartId),
+          );
+          setHeartsCollected((prev) => prev + 1);
+
+          // Add warmth for collecting hearts
+          setHugWarmth((prev) => Math.min(prev + 5, 100));
         };
 
         const handleReveal = () => {
@@ -1112,6 +1376,152 @@
                             {day.poem}
                           </p>
                         </div>
+
+                        {/* Valentine's Day Special Celebration Section - Only for Day 8 */}
+                        {dayNumber === 8 && (
+                          <div className="relative">
+                            {/* Floating Hearts and Roses Background */}
+                            <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                              {[...Array(12)].map((_, i) => (
+                                <motion.div
+                                  key={`heart-${i}`}
+                                  initial={{
+                                    opacity: 0,
+                                    y: Math.random() * 100 - 50,
+                                    x: Math.random() * 100 - 50,
+                                    scale: Math.random() * 0.5 + 0.5,
+                                  }}
+                                  animate={{
+                                    opacity: [0, 1, 0.8, 1, 0],
+                                    y: [Math.random() * 100 - 50, -150],
+                                    x: [
+                                      Math.random() * 100 - 50,
+                                      (Math.random() - 0.5) * 200,
+                                    ],
+                                    rotate: [0, Math.random() * 360],
+                                    scale: [
+                                      Math.random() * 0.5 + 0.5,
+                                      Math.random() * 0.8 + 0.8,
+                                      Math.random() * 0.5 + 0.5,
+                                    ],
+                                  }}
+                                  transition={{
+                                    duration: 8 + Math.random() * 4,
+                                    repeat: Infinity,
+                                    delay: Math.random() * 3,
+                                    ease: "linear",
+                                  }}
+                                  className="absolute text-4xl"
+                                  style={{
+                                    left: `${Math.random() * 100}%`,
+                                    top: `${Math.random() * 100}%`,
+                                  }}
+                                >
+                                  {Math.random() > 0.5 ? "❤️" : "🌹"}
+                                </motion.div>
+                              ))}
+                            </div>
+
+                            {/* Main Celebration Card */}
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.8, delay: 0.3 }}
+                              className="relative bg-gradient-to-br from-pink-600/20 via-red-600/20 to-rose-600/20 border-2 border-pink-500/50 rounded-3xl p-8 text-center backdrop-blur-sm"
+                            >
+                              {/* Sparkle Effects */}
+                              {[...Array(8)].map((_, i) => (
+                                <motion.div
+                                  key={`sparkle-${i}`}
+                                  animate={{
+                                    opacity: [0, 1, 0],
+                                    scale: [0, 1, 0],
+                                    rotate: [0, 180],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    delay: Math.random() * 3,
+                                  }}
+                                  className="absolute text-2xl"
+                                  style={{
+                                    left: `${10 + Math.random() * 80}%`,
+                                    top: `${10 + Math.random() * 80}%`,
+                                  }}
+                                >
+                                  ✨
+                                </motion.div>
+                              ))}
+
+                              {/* Forever Starts Today Title */}
+                              <motion.h2
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.5 }}
+                                className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-red-400 to-rose-400 mb-6"
+                              >
+                                Forever Starts Today
+                              </motion.h2>
+
+                              {/* I Love You Card */}
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.6, delay: 0.8 }}
+                                className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 mb-6 max-w-md mx-auto"
+                              >
+                                <div className="text-6xl mb-4 animate-pulse">
+                                  💕
+                                </div>
+                                <motion.p
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.8, delay: 1.2 }}
+                                  className="text-2xl sm:text-3xl font-bold text-white mb-2"
+                                >
+                                  I Love You
+                                </motion.p>
+                                <motion.p
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.8, delay: 1.5 }}
+                                  className="text-lg text-gray-200"
+                                >
+                                  Today, tomorrow, and always
+                                </motion.p>
+                              </motion.div>
+
+                              {/* Final Question */}
+                              <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 1.8 }}
+                                className="bg-gradient-to-r from-pink-600/30 to-rose-600/30 border border-pink-500/50 rounded-2xl p-6 max-w-lg mx-auto"
+                              >
+                                <p className="text-xl text-gray-200 mb-4 font-medium">
+                                  Will you be my understanding partner till my
+                                  last breath?
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="bg-gradient-to-r from-pink-600 to-rose-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                  >
+                                    Yes! ❤️
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                  >
+                                    Maybe Later
+                                  </motion.button>
+                                </div>
+                              </motion.div>
+                            </motion.div>
+                          </div>
+                        )}
 
                         {/* Spotify Music Section */}
                         {day.hasGame && (
@@ -1792,11 +2202,270 @@
                           </div>
                         )}
 
+                        {/* Kiss Day Interaction - Only for Kiss Day */}
+                        {day.gameType === "kiss" && (
+                          <div className="bg-gray-900 border border-red-900/30 rounded-xl p-6">
+                            {!gameStarted ? (
+                              <div className="text-center py-12">
+                                <motion.div
+                                  animate={{
+                                    y: [0, -10, 0],
+                                    rotate: [0, 5, -5, 0],
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "reverse",
+                                  }}
+                                  className="text-7xl mb-6"
+                                >
+                                  💋
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-gray-200 mb-4">
+                                  The Perfect Kiss
+                                </h3>
+                                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                  Long press and drag to control the tightness
+                                  of your kiss. Find the perfect balance between
+                                  gentle and passionate!
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-red-600 to-pink-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Start Kiss Interaction
+                                </motion.button>
+                              </div>
+                            ) : kissComplete ? (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center py-12"
+                              >
+                                <motion.div
+                                  animate={{
+                                    scale: [1, 1.2, 1],
+                                    rotate: [0, -10, 10, 0],
+                                  }}
+                                  transition={{
+                                    duration: 1,
+                                    repeat: Infinity,
+                                    repeatType: "reverse",
+                                  }}
+                                  className="text-7xl mb-4"
+                                >
+                                  💋
+                                </motion.div>
+                                <h3 className="text-2xl font-bold text-red-400 mb-4">
+                                  Perfect Kiss!
+                                </h3>
+                                <p className="text-gray-300 mb-6">
+                                  You've mastered the art of the perfect kiss!
+                                  The balance between passion and gentleness was
+                                  just right. 💕
+                                </p>
+                                <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-4 mb-6 inline-block">
+                                  <p className="text-red-300 text-sm">
+                                    ✨ Kiss Day completed with perfection! ✨
+                                  </p>
+                                </div>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={startGame}
+                                  className="bg-gradient-to-r from-red-600 to-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                                >
+                                  Try Again
+                                </motion.button>
+                              </motion.div>
+                            ) : (
+                              <div>
+                                <div className="text-center mb-6">
+                                  <h3 className="text-xl font-bold text-gray-200 mb-2">
+                                    Long Press & Drag for the Perfect Kiss
+                                  </h3>
+                                  <p className="text-gray-400">
+                                    Hold and drag to control tightness • Target:
+                                    40-90% for perfect kiss
+                                  </p>
+                                </div>
+
+                                {/* Interactive Area */}
+                                <div className="bg-gradient-to-br from-red-950/30 to-pink-950/30 border border-red-900/30 rounded-xl p-6">
+                                  <div className="text-center mb-6">
+                                    <motion.div
+                                      animate={{
+                                        scale: isKissing ? [1, 1.3, 1] : 1,
+                                        rotate: isKissing ? [0, -15, 15, 0] : 0,
+                                      }}
+                                      transition={{
+                                        duration: 0.8,
+                                        repeat: isKissing ? Infinity : 0,
+                                      }}
+                                      className="text-6xl mb-4"
+                                    >
+                                      💋
+                                    </motion.div>
+
+                                    <p className="text-gray-300 font-medium mb-4">
+                                      {isKissing
+                                        ? "Perfect! Keep holding..."
+                                        : "Long press the kiss button below"}
+                                    </p>
+                                  </div>
+
+                                  {/* Long Press Kiss Button */}
+                                  <div className="text-center">
+                                    <motion.button
+                                      onMouseDown={handleKissStart}
+                                      onMouseUp={handleKissEnd}
+                                      onTouchStart={handleKissStart}
+                                      onTouchEnd={handleKissEnd}
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      className="relative bg-gradient-to-r from-red-600 to-pink-600 p-8 rounded-2xl"
+                                    >
+                                      <motion.div
+                                        animate={{
+                                          scale: isKissing ? [1, 1.3, 1] : 1,
+                                          rotate: isKissing
+                                            ? [0, -10, 10, 0]
+                                            : 0,
+                                        }}
+                                        transition={{
+                                          duration: 0.8,
+                                          repeat: isKissing ? Infinity : 0,
+                                        }}
+                                        className="text-6xl"
+                                      >
+                                        💋
+                                      </motion.div>
+
+                                      <div className="mt-4">
+                                        {isKissing ? (
+                                          <motion.div
+                                            animate={{ scale: [1, 1.1, 1] }}
+                                            transition={{
+                                              duration: 0.5,
+                                              repeat: Infinity,
+                                            }}
+                                            className="text-lg font-semibold text-white"
+                                          >
+                                            Hold for perfect kiss...{" "}
+                                            {Math.round(kissTightness)}%
+                                          </motion.div>
+                                        ) : (
+                                          <div className="text-lg font-medium text-white">
+                                            Long press for the perfect kiss
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Visual feedback based on tightness */}
+                                      <div className="mt-4 flex justify-center items-center gap-4">
+                                        {kissTightness < 40 &&
+                                          kissTightness > 0 && (
+                                            <motion.div
+                                              animate={{ scale: [1, 1.2, 1] }}
+                                              transition={{
+                                                duration: 0.5,
+                                                repeat: Infinity,
+                                              }}
+                                              className="text-2xl"
+                                            >
+                                              😊
+                                            </motion.div>
+                                          )}
+                                        {kissTightness >= 40 &&
+                                          kissTightness <= 90 && (
+                                            <motion.div
+                                              animate={{ scale: [1, 1.2, 1] }}
+                                              transition={{
+                                                duration: 0.5,
+                                                repeat: Infinity,
+                                              }}
+                                              className="text-2xl"
+                                            >
+                                              😍
+                                            </motion.div>
+                                          )}
+                                        {kissTightness > 90 && (
+                                          <motion.div
+                                            animate={{ scale: [1, 1.2, 1] }}
+                                            transition={{
+                                              duration: 0.5,
+                                              repeat: Infinity,
+                                            }}
+                                            className="text-2xl"
+                                          >
+                                            🔥
+                                          </motion.div>
+                                        )}
+                                      </div>
+
+                                      {/* Progress bar */}
+                                      <div className="mt-4 w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                                        <motion.div
+                                          animate={{
+                                            width: `${kissTightness}%`,
+                                            backgroundColor:
+                                              kissTightness < 80
+                                                ? "#3b82f6"
+                                                : kissTightness <= 90
+                                                  ? "#10b981"
+                                                  : "#ef4444",
+                                          }}
+                                          transition={{ duration: 0.2 }}
+                                          className="h-full"
+                                        />
+                                      </div>
+
+                                      <div className="mt-2 text-sm text-gray-300">
+                                        Target: 80-90% for perfect kiss
+                                      </div>
+                                    </motion.button>
+                                  </div>
+
+                                  {/* Feedback Message */}
+                                  <AnimatePresence>
+                                    {showKissFeedback && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className={`text-center p-4 rounded-lg mb-4 ${
+                                          kissComplete
+                                            ? "bg-green-950/30 border border-green-900/50"
+                                            : "bg-yellow-950/30 border border-yellow-900/50"
+                                        }`}
+                                      >
+                                        <p
+                                          className={`font-semibold ${
+                                            kissComplete
+                                              ? "text-green-300"
+                                              : "text-yellow-300"
+                                          }`}
+                                        >
+                                          {showKissFeedback}
+                                        </p>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Rose Collection Game - Only for Rose Day */}
                         {day.gameType !== "proposal" &&
                           day.gameType !== "chocolate" &&
                           day.gameType !== "teddy" &&
                           day.gameType !== "promise" &&
+                          day.gameType !== "kiss" &&
+                          day.gameType !== "valentine" &&
                           day.hasGame && (
                             <div className="bg-gray-900 border border-red-900/30 rounded-xl p-6">
                               {!gameStarted ? (
@@ -1944,6 +2613,184 @@
                               )}
                             </div>
                           )}
+
+                        {/* Valentine's Day Experience */}
+                        {day.gameType === "valentine" && (() => {
+                          const memories = [
+                            { day: 1, name: "Rose Day", emoji: "🌹", caption: "The rose that started it all", color: "from-red-900 to-pink-900" },
+                            { day: 2, name: "Propose Day", emoji: "💍", caption: "When I asked you to be mine", color: "from-pink-900 to-rose-900" },
+                            { day: 3, name: "Chocolate Day", emoji: "🍫", caption: "Sweet moments we shared", color: "from-amber-900 to-orange-900" },
+                            { day: 4, name: "Teddy Day", emoji: "🧸", caption: "A hug even when apart", color: "from-yellow-900 to-amber-900" },
+                            { day: 5, name: "Promise Day", emoji: "🤝", caption: "Promises from the heart", color: "from-blue-900 to-cyan-900" },
+                            { day: 6, name: "Kiss Day", emoji: "💋", caption: "Sealed with love", color: "from-red-900 to-pink-900" },
+                            { day: 7, name: "Hug Day", emoji: "🤗", caption: "Warmth beyond words", color: "from-orange-900 to-amber-900" },
+                          ];
+
+                          const moveNoButton = () => {
+                            const angle = Math.random() * Math.PI * 2;
+                            const dist = 80 + Math.random() * 120;
+                            setNoButtonPos({ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist });
+                          };
+
+                          return (
+                            <div className="space-y-6">
+                              {valentinePhase === "memories" && (
+                                <div className="bg-gray-900 border border-pink-900/40 rounded-2xl p-6 text-center">
+                                  <p className="text-pink-400 text-sm font-semibold mb-4 flex items-center justify-center gap-2">
+                                    <span>📸</span> Our Journey Together
+                                  </p>
+                                  <AnimatePresence mode="wait">
+                                    <motion.div
+                                      key={memorySlide}
+                                      initial={{ opacity: 0, x: 60 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      exit={{ opacity: 0, x: -60 }}
+                                      transition={{ duration: 0.4 }}
+                                      className={`bg-gradient-to-br ${memories[memorySlide].color} rounded-xl p-8 mb-4`}
+                                    >
+                                      <div className="text-7xl mb-3">{memories[memorySlide].emoji}</div>
+                                      <h3 className="text-white text-xl font-bold mb-1">{memories[memorySlide].name}</h3>
+                                      <p className="text-gray-300 text-sm italic">"{memories[memorySlide].caption}"</p>
+                                    </motion.div>
+                                  </AnimatePresence>
+                                  <div className="flex justify-center gap-2 mb-5">
+                                    {memories.map((_, i) => (
+                                      <button key={i} onClick={() => setMemorySlide(i)}
+                                        className={`w-2 h-2 rounded-full transition-all ${i === memorySlide ? "bg-pink-500 w-6" : "bg-gray-600"}`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <div className="flex gap-3 justify-center">
+                                    <button onClick={() => setMemorySlide(s => Math.max(0, s - 1))}
+                                      className="px-4 py-2 bg-gray-700 text-gray-300 rounded-full text-sm hover:bg-gray-600 transition-all">
+                                      ← Prev
+                                    </button>
+                                    {memorySlide < memories.length - 1 ? (
+                                      <button onClick={() => setMemorySlide(s => s + 1)}
+                                        className="px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all">
+                                        Next →
+                                      </button>
+                                    ) : (
+                                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                                        onClick={() => setValentinePhase("letter")}
+                                        className="px-5 py-2 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-full text-sm font-bold shadow-lg hover:shadow-xl transition-all">
+                                        A letter awaits 💌
+                                      </motion.button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {valentinePhase === "letter" && (
+                                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                                  className="bg-gray-900 border border-pink-900/40 rounded-2xl p-6">
+                                  <p className="text-pink-400 text-sm font-semibold mb-4 flex items-center justify-center gap-2 text-center">
+                                    <span>💌</span> A Letter From My Heart
+                                  </p>
+                                  <div className="bg-pink-950/30 border border-pink-900/30 rounded-xl p-6 text-left space-y-4">
+                                    <p className="text-gray-200 leading-relaxed">My dearest love,</p>
+                                    <p className="text-gray-300 leading-relaxed text-sm">
+                                      Through seven days I tried to show you a fraction of what you mean to me.
+                                      Every rose, every promise, every hug — they were all just tiny reflections of
+                                      the love I carry in my heart for you.
+                                    </p>
+                                    <p className="text-gray-300 leading-relaxed text-sm">
+                                      You are my calm in chaos, my laughter in sadness, my home when I feel lost.
+                                      With you, every ordinary moment becomes extraordinary.
+                                    </p>
+                                    <p className="text-gray-300 leading-relaxed text-sm">
+                                      Today, on Valentine's Day, I want to ask you something from the deepest
+                                      corner of my heart...
+                                    </p>
+                                    <p className="text-pink-400 font-semibold text-right">— Yours, always 💕</p>
+                                  </div>
+                                  <div className="text-center mt-5">
+                                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                                      onClick={() => setValentinePhase("question")}
+                                      className="px-6 py-3 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-full font-bold shadow-lg hover:shadow-xl transition-all">
+                                      Read on... 💕
+                                    </motion.button>
+                                  </div>
+                                </motion.div>
+                              )}
+
+                              {valentinePhase === "question" && !valentineAnswered && (
+                                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                                  className="bg-gray-900 border border-pink-900/40 rounded-2xl p-8 text-center relative overflow-hidden">
+                                  {[...Array(6)].map((_, i) => (
+                                    <motion.div key={i}
+                                      animate={{ y: [0, -20, 0], opacity: [0.3, 0.8, 0.3] }}
+                                      transition={{ duration: 2 + i * 0.3, repeat: Infinity, delay: i * 0.4 }}
+                                      className="absolute text-2xl pointer-events-none"
+                                      style={{ left: `${10 + i * 15}%`, top: `${60 + (i % 2) * 20}%` }}>
+                                      💕
+                                    </motion.div>
+                                  ))}
+                                  <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+                                    className="text-6xl mb-4">💝</motion.div>
+                                  <h3 className="text-xl font-bold text-white mb-2">The Question</h3>
+                                  <p className="text-gray-300 leading-relaxed mb-8 text-lg">
+                                    Will you be my understanding partner till my last breath?
+                                  </p>
+                                  <div className="flex items-center justify-center gap-6 relative" style={{ minHeight: "80px" }}>
+                                    <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
+                                      onClick={() => { setValentineAnswered(true); setValentinePhase("yes"); }}
+                                      className="px-8 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full font-bold text-lg shadow-lg hover:shadow-pink-500/50 transition-all">
+                                      Yes 💖
+                                    </motion.button>
+                                    <motion.button
+                                      animate={{ x: noButtonPos.x, y: noButtonPos.y }}
+                                      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                      onHoverStart={moveNoButton}
+                                      onMouseEnter={moveNoButton}
+                                      onTouchStart={(e) => { e.preventDefault(); moveNoButton(); }}
+                                      className="px-8 py-3 bg-gray-700 text-gray-300 rounded-full font-bold text-lg border border-gray-600 cursor-none select-none">
+                                      No 🐟
+                                    </motion.button>
+                                  </div>
+                                  <p className="text-gray-500 text-xs mt-6 italic">Psst... the No button seems to have a mind of its own 🐠</p>
+                                </motion.div>
+                              )}
+
+                              {(valentinePhase === "yes" || valentineAnswered) && valentinePhase !== "question" && (
+                                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                                  className="bg-gray-900 border border-pink-900/40 rounded-2xl p-8 text-center relative overflow-hidden">
+                                  {[...Array(10)].map((_, i) => (
+                                    <motion.div key={i}
+                                      initial={{ opacity: 0, y: 0 }}
+                                      animate={{ opacity: [0, 1, 0], y: -150, x: (Math.random() - 0.5) * 100 }}
+                                      transition={{ duration: 2.5, delay: i * 0.2, repeat: Infinity, repeatDelay: 1 }}
+                                      className="absolute text-3xl pointer-events-none"
+                                      style={{ left: `${10 + Math.random() * 80}%`, bottom: "20%" }}>
+                                      {["💕", "💖", "✨", "🌹", "💗"][i % 5]}
+                                    </motion.div>
+                                  ))}
+                                  <div className="relative z-10">
+                                    <motion.div animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }}
+                                      transition={{ duration: 1.5, repeat: Infinity }} className="text-7xl mb-4">
+                                      💍
+                                    </motion.div>
+                                    <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 mb-2">
+                                      Forever Starts Today
+                                    </h2>
+                                    <p className="text-gray-300 text-lg mb-3">You said YES! 🎉</p>
+                                    <p className="text-gray-400 text-sm leading-relaxed max-w-sm mx-auto mb-6">
+                                      Here's to every laugh, every tear, every sunrise and sunset — together.
+                                      Happy Valentine's Day, my love. 💕
+                                    </p>
+                                    <div className="flex justify-center gap-3 flex-wrap">
+                                      <span className="text-4xl">🌹</span>
+                                      <span className="text-4xl">💍</span>
+                                      <span className="text-4xl">💕</span>
+                                      <span className="text-4xl">🎉</span>
+                                      <span className="text-4xl">✨</span>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {/* Navigation Buttons - Only for non-Rose Day */}
                         {!day.hasGame && (
