@@ -417,6 +417,86 @@
         const [noButtonPos, setNoButtonPos] = useState({ x: 0, y: 0 });
         const [valentineAnswered, setValentineAnswered] = useState(false);
 
+        // Quiz states
+        const [showQuiz, setShowQuiz] = useState(false);
+        const [currentQuestion, setCurrentQuestion] = useState(0);
+        const [selectedAnswer, setSelectedAnswer] = useState(null);
+        const [quizCompleted, setQuizCompleted] = useState(false);
+        const [wrongAnswerTime, setWrongAnswerTime] = useState(0);
+        const [showGiftLocation, setShowGiftLocation] = useState(false);
+        const [triedAllOptions, setTriedAllOptions] = useState([]);
+        const [showSpecialMessage, setShowSpecialMessage] = useState(false);
+
+        // Quiz data for all 8 days
+        const quizData = {
+          1: {
+            question: "I like you to be dressed in",
+            options: ["saree", "chudithar", "skirt top"],
+            correctAnswer: "saree",
+            giftLocation: "Today, your gift is on top of the TV unit",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+          2: {
+            question: "What'd I admire the most in you",
+            options: ["bravery", "helping tendency", "can-do attitude"],
+            correctAnswer: "bravery",
+            giftLocation:
+              "Today, your gift is on top of Microwave unit in kitchen",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+          3: {
+            question: "I like",
+            options: ["Biryani", "Meen kolambu", "Fried Rice", "Pasta"],
+            correctAnswer: "Meen kolambu",
+            giftLocation: "Today, your gift is on Crockery",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+          4: {
+            question: "One of the things you presented me first",
+            options: ["belt", "purse", "Shoes"],
+            correctAnswer: "purse",
+            giftLocation: "Today, your gift is on Pink room cupboard",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+          5: {
+            question: "What I like the most in you",
+            options: ["Eyes", "Hair", "Physique", "Anger", "Hands", "hip"],
+            correctAnswer: "all",
+            giftLocation: "Today, your gift is on master bedroom near clock",
+            instructions:
+              "Try all options! Each wrong answer will lock you out for 2 minutes, but keep trying to find the special message!",
+            specialMessage: "I like everything in you!",
+          },
+          6: {
+            question: "First jewel I bought you",
+            options: ["necklace", "choker", "ring", "earring"],
+            correctAnswer: "ring",
+            giftLocation: "Today, your gift is on top of Crockery",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+          7: {
+            question: "What was our fav dish in Mughal Tiruvanmiyur",
+            options: ["pepper BBQ", "Prawn biryani", "Grill"],
+            correctAnswer: "pepper BBQ",
+            giftLocation: "Today, your gift is inside the rice dispenser",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+          8: {
+            question: "What did I present you during our betrothal",
+            options: ["Poco X3", "Redmi Note 10 Pro 5G", "Redmi Note 6 pro"],
+            correctAnswer: "Poco X3",
+            giftLocation: "Today, your gift is your handbag",
+            instructions:
+              "Choose the correct answer. Wrong answer will lock you out for 2 minutes!",
+          },
+        };
+
         const dayContent = {
           1: {
             name: "Rose Day",
@@ -1199,6 +1279,75 @@
         const handleReveal = () => {
           setRevealed(true);
         };
+
+        // Quiz handler functions
+        const handleQuizStart = () => {
+          setShowQuiz(true);
+          setCurrentQuestion(0);
+          setSelectedAnswer(null);
+          setQuizCompleted(false);
+          setWrongAnswerTime(0);
+          setShowGiftLocation(false);
+          setTriedAllOptions([]);
+          setShowSpecialMessage(false);
+        };
+
+        const handleAnswerSelect = (answer) => {
+          if (wrongAnswerTime > 0) return; // Block if penalty is active
+
+          const currentQuiz = quizData[dayNumber];
+
+          // Special handling for Day 5 (all options are "wrong" until all are tried)
+          if (dayNumber === 5) {
+            const newTriedOptions = [...triedAllOptions, answer];
+            setTriedAllOptions(newTriedOptions);
+
+            if (newTriedOptions.length === currentQuiz.options.length) {
+              // All options tried, show special message
+              setShowSpecialMessage(true);
+              setTimeout(() => {
+                setShowGiftLocation(true);
+                setQuizCompleted(true);
+              }, 3000);
+            } else {
+              // Show "wrong" and apply penalty
+              setWrongAnswerTime(120);
+              setSelectedAnswer(answer);
+              setTimeout(() => {
+                setSelectedAnswer(null);
+              }, 2000);
+            }
+          } else {
+            // Normal quiz logic for other days
+            if (answer === currentQuiz.correctAnswer) {
+              setQuizCompleted(true);
+              setShowGiftLocation(true);
+              setSelectedAnswer(answer);
+            } else {
+              setWrongAnswerTime(120);
+              setSelectedAnswer(answer);
+              setTimeout(() => {
+                setSelectedAnswer(null);
+              }, 2000);
+            }
+          }
+        };
+
+        const closeQuiz = () => {
+          setShowQuiz(false);
+          setShowGiftLocation(false);
+          setShowSpecialMessage(false);
+        };
+
+        // Timer for wrong answer penalty
+        useEffect(() => {
+          if (wrongAnswerTime > 0) {
+            const timer = setTimeout(() => {
+              setWrongAnswerTime((prev) => prev - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+          }
+        }, [wrongAnswerTime]);
 
         const goBack = () => {
           navigate("/");
@@ -3041,6 +3190,222 @@
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Quiz Modal */}
+              <AnimatePresence>
+                {showQuiz && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    onClick={closeQuiz}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                      transition={{
+                        type: "spring",
+                        damping: 20,
+                        stiffness: 300,
+                      }}
+                      className="bg-gradient-to-br from-gray-900 to-black border-2 border-red-600/50 rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Quiz Header */}
+                      <div className="text-center mb-8">
+                        <motion.div
+                          animate={{
+                            scale: [1, 1.1, 1],
+                            rotate: [0, 5, -5, 0],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                          }}
+                          className="text-6xl mb-4"
+                        >
+                          🎁
+                        </motion.div>
+                        <h2 className="text-3xl font-bold text-white mb-2">
+                          Find Your Gift! 🎁
+                        </h2>
+                        <p className="text-gray-400">
+                          Answer the question to reveal today's gift location
+                        </p>
+                      </div>
+
+                      {/* Instructions */}
+                      <div className="bg-red-950/30 border border-red-800/50 rounded-xl p-4 mb-6">
+                        <p className="text-yellow-400 text-sm font-medium text-center">
+                          ⚠️ {quizData[dayNumber].instructions}
+                        </p>
+                        {wrongAnswerTime > 0 && (
+                          <div className="mt-3 text-center">
+                            <p className="text-red-400 font-bold text-lg">
+                              ⏰ Wait {wrongAnswerTime} seconds before trying
+                              again!
+                            </p>
+                            <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                              <motion.div
+                                initial={{ width: "100%" }}
+                                animate={{
+                                  width: `${(wrongAnswerTime / 120) * 100}%`,
+                                }}
+                                transition={{ duration: 1, ease: "linear" }}
+                                className="bg-red-500 h-2 rounded-full"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Question */}
+                      <div className="text-center mb-8">
+                        <h3 className="text-2xl font-bold text-white mb-6">
+                          {quizData[dayNumber].question}
+                        </h3>
+
+                        {/* Answer Options */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {quizData[dayNumber].options.map((option, index) => {
+                            const isSelected = selectedAnswer === option;
+                            const isDisabled = wrongAnswerTime > 0;
+
+                            return (
+                              <motion.button
+                                key={index}
+                                whileHover={!isDisabled ? { scale: 1.05 } : {}}
+                                whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                                onClick={() =>
+                                  !isDisabled && handleAnswerSelect(option)
+                                }
+                                disabled={isDisabled}
+                                className={`relative p-4 rounded-xl font-semibold text-lg transition-all ${
+                                  isDisabled
+                                    ? "bg-gray-800 text-gray-600 cursor-not-allowed"
+                                    : isSelected
+                                      ? dayNumber === 5 && !showSpecialMessage
+                                        ? "bg-red-600/20 border-2 border-red-500 text-red-300"
+                                        : "bg-green-600/20 border-2 border-green-500 text-green-300"
+                                      : "bg-gray-800 border-2 border-gray-700 text-gray-200 hover:border-red-500 hover:bg-red-950/30 cursor-pointer"
+                                }`}
+                              >
+                                <span className="relative z-10">{option}</span>
+
+                                {/* Selection indicator */}
+                                {isSelected && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute inset-0 flex items-center justify-center"
+                                  >
+                                    <span className="text-3xl">
+                                      {dayNumber === 5 && !showSpecialMessage
+                                        ? "❌"
+                                        : "✅"}
+                                    </span>
+                                  </motion.div>
+                                )}
+
+                                {/* Disabled overlay */}
+                                {isDisabled && (
+                                  <div className="absolute inset-0 bg-gray-900/50 rounded-xl flex items-center justify-center">
+                                    <span className="text-2xl">🔒</span>
+                                  </div>
+                                )}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Special Message for Day 5 */}
+                      {showSpecialMessage && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-gradient-to-r from-pink-600/30 to-rose-600/30 border-2 border-pink-500/50 rounded-xl p-6 mb-6 text-center"
+                        >
+                          <div className="text-4xl mb-3">💕</div>
+                          <h3 className="text-2xl font-bold text-white mb-2">
+                            {quizData[dayNumber].specialMessage}
+                          </h3>
+                          <p className="text-gray-300">
+                            Now you can find your gift! 🎁
+                          </p>
+                        </motion.div>
+                      )}
+
+                      {/* Gift Location Popup */}
+                      {showGiftLocation && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          className="bg-gradient-to-r from-green-600/30 to-emerald-600/30 border-2 border-green-500/50 rounded-xl p-6 mb-6 text-center"
+                        >
+                          <div className="text-5xl mb-3">🎉</div>
+                          <h3 className="text-2xl font-bold text-white mb-3">
+                            Congratulations! 🎊
+                          </h3>
+                          <div className="bg-black/30 rounded-lg p-4 mb-4">
+                            <p className="text-lg font-semibold text-yellow-400">
+                              📍 Gift Location:
+                            </p>
+                            <p className="text-white text-lg mt-2">
+                              {quizData[dayNumber].giftLocation}
+                            </p>
+                          </div>
+                          <div className="flex gap-3 justify-center">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={closeQuiz}
+                              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+                            >
+                              Got it! 🎁
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Close Button */}
+                      {!quizCompleted && !showGiftLocation && (
+                        <div className="text-center">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={closeQuiz}
+                            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-full font-medium transition-all"
+                          >
+                            Close Quiz
+                          </motion.button>
+                        </div>
+                      )}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Quiz Button - Fixed at bottom */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.5 }}
+                className="fixed bottom-6 right-6 z-40"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleQuizStart}
+                  className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 border-2 border-red-500/50"
+                >
+                  <span className="text-xl">🎁</span>
+                  <span>Find Today's Gift</span>
+                </motion.button>
+              </motion.div>
 
               {/* Footer */}
               <motion.div
